@@ -1,0 +1,87 @@
+cabal-version: 3.4
+name: hydra-pleco-cli
+version: 0.1.0.0
+synopsis: The pleco command-line client for hydra-pleco rest API
+description:
+  See README.md for more details.
+
+license: MIT
+author: Sean D Gillespie
+maintainer: Sean D Gillespie <sean@mistersg.net>
+copyright: 2026 Sean D Gillespie
+category: Development
+build-type: Simple
+tested-with: ghc ==9.10.*
+
+common common-options
+  build-depends:
+    base >=4.16 && <5,
+    relude,
+    unliftio,
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude),
+    relude,
+
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wderiving-defaults
+    -Wmissing-deriving-strategies
+    -Wincomplete-uni-patterns
+    -Wredundant-constraints
+    -Wnoncanonical-monad-instances
+    -fhide-source-paths
+    -Wmissing-export-lists
+    -Wpartial-fields
+
+  default-extensions:
+    DeriveAnyClass
+    DerivingStrategies
+    LambdaCase
+    OverloadedStrings
+    RecordWildCards
+
+  default-language: GHC2021
+
+library
+  import: common-options
+  hs-source-dirs: src
+  exposed-modules:
+    Hydra.Pleco.Cli
+
+  build-depends:
+    hydra-pleco-api,
+    optparse-applicative,
+
+executable pleco
+  import: common-options
+  hs-source-dirs: app
+  main-is: Main.hs
+  build-depends:
+    hydra-pleco-cli
+
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+
+test-suite tests
+  import: common-options
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  other-modules:
+    Hydra.Pleco.CliSpec
+
+  build-depends:
+    hspec,
+    hydra-pleco-cli,
+    optparse-applicative,
+
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N

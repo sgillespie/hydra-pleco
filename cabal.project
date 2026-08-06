@@ -1,0 +1,8 @@
+packages:
+  hydra-pleco-api
+  hydra-pleco-server
+  hydra-pleco-cli
+
+index-state: 2026-06-29T00:01:59Z
+tests: True
+test-show-details: direct
