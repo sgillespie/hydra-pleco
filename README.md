@@ -2,7 +2,7 @@
 
 > A standalone server that attaches to Hydra's PostgreSQL and feeds a webhook/query API.
 
-[![CI](https://github.com/sgillespie/hydra-ng/actions/workflows/ci.yml/badge.svg)](https://github.com/sgillespie/hydra-ng/actions/workflows/ci.yml)
+[![CI](https://github.com/sgillespie/hydra-pleco/actions/workflows/ci.yml/badge.svg)](https://github.com/sgillespie/hydra-ng/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 `hydra-pleco` reads Hydra's PostgreSQL database directly and exposes a REST query API and a
