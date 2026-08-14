@@ -16,6 +16,7 @@ tested-with: ghc ==9.10.*
 common common-options
   build-depends:
     base >=4.16 && <5,
+    hydra-pleco-api,
     relude,
     unliftio,
 
@@ -38,11 +39,15 @@ common common-options
     -Wpartial-fields
 
   default-extensions:
+    DataKinds
     DeriveAnyClass
+    DeriveGeneric
     DerivingStrategies
+    KindSignatures
     LambdaCase
     OverloadedStrings
     RecordWildCards
+    TypeOperators
 
   default-language: GHC2021
 
@@ -50,7 +55,12 @@ library
   import: common-options
   hs-source-dirs: src
   exposed-modules:
-    Hydra.Pleco.App
+    Hydra.Pleco.Server
+
+  build-depends:
+    aeson,
+    servant,
+    servant-server,
 
 executable hydra-pleco
   import: common-options
@@ -59,6 +69,7 @@ executable hydra-pleco
   build-depends:
     hydra-pleco-api,
     hydra-pleco-server,
+    warp,
 
   ghc-options:
     -threaded
@@ -71,7 +82,7 @@ test-suite tests
   hs-source-dirs: test
   main-is: Main.hs
   other-modules:
-    Hydra.Pleco.AppSpec
+    Hydra.Pleco.ServerSpec
 
   build-depends:
     hspec,

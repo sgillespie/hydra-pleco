@@ -50,18 +50,23 @@ library
   import: common-options
   hs-source-dirs: src
   exposed-modules:
-    Hydra.Pleco.Cli
+    Hydra.Pleco.Client
 
   build-depends:
+    http-client,
     hydra-pleco-api,
     optparse-applicative,
+    servant,
+    servant-client,
+    servant-client-core,
 
 executable pleco
   import: common-options
   hs-source-dirs: app
   main-is: Main.hs
   build-depends:
-    hydra-pleco-cli
+    hydra-pleco-cli,
+    optparse-applicative,
 
   ghc-options:
     -threaded
@@ -80,6 +85,8 @@ test-suite tests
     hspec,
     hydra-pleco-cli,
     optparse-applicative,
+    servant,
+    servant-client,
 
   ghc-options:
     -threaded

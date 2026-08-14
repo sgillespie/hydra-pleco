@@ -1,8 +1,8 @@
 module Main (main) where
 
-import Hydra.Pleco.AppSpec qualified as AppSpec
+import Hydra.Pleco.ServerSpec qualified as ServerSpec
 
 import Test.Hspec
 
 main :: IO ()
-main = hspec AppSpec.spec
+main = hspec ServerSpec.spec

@@ -15,8 +15,11 @@ tested-with: ghc ==9.10.*
 
 common common-options
   build-depends:
+    aeson,
     base >=4.16 && <5,
     relude,
+    servant,
+    unliftio,
 
   mixins:
     base hiding (Prelude),
@@ -37,11 +40,15 @@ common common-options
     -Wpartial-fields
 
   default-extensions:
+    DataKinds
     DeriveAnyClass
+    DeriveGeneric
     DerivingStrategies
+    KindSignatures
     LambdaCase
     OverloadedStrings
     RecordWildCards
+    TypeOperators
 
   default-language: GHC2021
 

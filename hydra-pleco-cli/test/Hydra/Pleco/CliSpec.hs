@@ -1,16 +1,17 @@
 module Hydra.Pleco.CliSpec (spec) where
 
-import Hydra.Pleco.Cli (Options (..), optionsParserInfo)
+import Hydra.Pleco.Client
 
-import Options.Applicative (defaultPrefs, execParserPure, getParseResult)
+import Servant.Client (ClientEnv (..))
 import Test.Hspec
 
 spec :: Spec
-spec = describe "options parser" $ do
-  it "defaults verbose to False" $
-    parse [] `shouldBe` Just (Options False)
+spec = do
+  describe "mkPlecoClientEnv" $ do
+    it "sets expected BaseUrl" $ do
+      let baseUrl' = BaseUrl Http "localhost" 8081 ""
+      manager' <- newManager defaultManagerSettings
 
-  it "parses --verbose" $
-    parse ["--verbose"] `shouldBe` Just (Options True)
-  where
-    parse = getParseResult . execParserPure defaultPrefs optionsParserInfo
+      let env = mkPlecoClientEnv manager' baseUrl'
+
+      baseUrl (pceClientEnv env) `shouldBe` baseUrl'
