@@ -15,7 +15,7 @@ module Hydra.Pleco.Client
     Servant.Scheme (..),
   ) where
 
-import Hydra.Pleco.Api (Healthz, HydraApi, healthz)
+import Hydra.Pleco.Api (Health, HydraApi (..))
 
 import Network.HTTP.Client (Manager, defaultManagerSettings, newManager)
 import Servant.Client (AsClientT, BaseUrl, ClientEnv, ClientError, ClientM, (//))
@@ -55,5 +55,5 @@ mkPlecoClientEnv manager url =
 plecoClient :: HydraApi (AsClientT PlecoClient)
 plecoClient = genericClientHoist hoistClientM
 
-getHealth :: PlecoClient Healthz
-getHealth = plecoClient // healthz
+getHealth :: PlecoClient Health
+getHealth = plecoClient // health

@@ -59,9 +59,11 @@ library
 
   build-depends:
     aeson,
+    katip,
     servant,
     servant-server,
     servant-swagger-ui,
+    warp,
 
 executable hydra-pleco
   import: common-options
