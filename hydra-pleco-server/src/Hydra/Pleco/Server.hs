@@ -10,8 +10,22 @@ module Hydra.Pleco.Server
 import Hydra.Pleco.Api (Health (..), HydraApi (..), HydraApp (..), hydraOpenApi)
 
 import Control.Exception (finally)
-import Katip (Katip, KatipContext, LogContexts, LogEnv, Namespace)
+import Data.Text.Lazy.Builder (fromText)
+import Katip
+  ( ItemFormatter,
+    Katip,
+    KatipContext,
+    LogContexts,
+    LogEnv,
+    LogItem,
+    Namespace,
+    renderSeverity,
+    unLogStr,
+  )
 import Katip qualified
+import Katip.Core qualified as Katip
+import Katip.Format.Time (formatAsLogTime)
+import Katip.Scribes.Handle qualified as Katip
 import Network.Wai.Handler.Warp (Port, run)
 import Servant
 import Servant.Server.Generic (genericServeT)
@@ -60,11 +74,33 @@ instance (MonadIO io) => KatipContext (PlecoServerT io) where
 runPlecoServerT :: PlecoServerEnv -> PlecoServerT m a -> m a
 runPlecoServerT env = usingReaderT env . unPlecoServerT
 
+-- | Katip's built-in 'bracketFormat' copied here, with some fields omitted. The
+-- following fields have been removed:
+--
+--  * PID
+--  * Thread ID
+logFormat :: (LogItem a) => ItemFormatter a
+logFormat withColor verb Katip.Item {..} =
+  Katip.brackets nowStr
+    <> Katip.brackets (mconcat $ map fromText $ Katip.intercalateNs _itemNamespace)
+    <> Katip.brackets (fromText (renderSeverity' _itemSeverity))
+    <> Katip.brackets (fromString _itemHost)
+    <> mconcat ks
+    <> maybe mempty (Katip.brackets . fromString . Katip.locationToString) _itemLoc
+    <> fromText " "
+    <> unLogStr _itemMessage
+  where
+    nowStr = fromText (formatAsLogTime _itemTime)
+    ks = map Katip.brackets $ Katip.getKeys verb _itemPayload
+    renderSeverity' severity =
+      Katip.colorBySeverity withColor severity (renderSeverity severity)
+
 mkPlecoServerEnv :: IO PlecoServerEnv
 mkPlecoServerEnv = do
   logEnv <- Katip.initLogEnv "hydra-pleco" "production"
   scribe <-
-    Katip.mkHandleScribe
+    Katip.mkHandleScribeWithFormatter
+      logFormat
       Katip.ColorIfTerminal
       stderr
       (Katip.permitItem Katip.InfoS)
