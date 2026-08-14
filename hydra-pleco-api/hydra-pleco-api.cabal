@@ -17,8 +17,12 @@ common common-options
   build-depends:
     aeson,
     base >=4.16 && <5,
+    http-media,
+    openapi3,
     relude,
     servant,
+    servant-openapi3,
+    servant-swagger-ui,
     unliftio,
 
   mixins:

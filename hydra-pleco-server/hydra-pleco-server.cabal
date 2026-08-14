@@ -61,6 +61,7 @@ library
     aeson,
     servant,
     servant-server,
+    servant-swagger-ui,
 
 executable hydra-pleco
   import: common-options

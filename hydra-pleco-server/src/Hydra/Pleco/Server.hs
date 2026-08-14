@@ -5,10 +5,11 @@ module Hydra.Pleco.Server
     app,
   ) where
 
-import Hydra.Pleco.Api (Healthz (..), HydraApi (..))
+import Hydra.Pleco.Api (Health (..), HydraApi (..), HydraApp (..), hydraOpenApi)
 
 import Servant
 import Servant.Server.Generic (genericServeT)
+import Servant.Swagger.UI (swaggerSchemaUIServerT)
 import UnliftIO (MonadUnliftIO)
 
 -- | The application monad stack
@@ -32,11 +33,16 @@ runPlecoServerT env = usingReaderT env . unPlecoServerT
 app :: PlecoServerEnv -> Application
 app env = genericServeT (runPlecoServerT env) server
 
-server :: ServerT (NamedRoutes HydraApi) (PlecoServerT Handler)
+server :: ServerT (NamedRoutes HydraApp) (PlecoServerT Handler)
 server =
-  HydraApi
-    { healthz = healthzHandler
+  HydraApp
+    { api = apiServer,
+      docs = swaggerSchemaUIServerT hydraOpenApi
     }
 
-healthzHandler :: PlecoServerT Handler Healthz
-healthzHandler = pure (Healthz "running")
+apiServer :: ServerT (NamedRoutes HydraApi) (PlecoServerT Handler)
+apiServer = HydraApi
+  { health = healthHandler }
+
+healthHandler :: PlecoServerT Handler Health
+healthHandler = pure (Health "pass")
