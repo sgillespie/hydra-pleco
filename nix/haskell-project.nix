@@ -25,7 +25,7 @@
 
     cabalProject = pkgs.haskell-nix.cabalProject' {
       src = ./..;
-      compiler-nix-name = "ghc910";
+      compiler-nix-name = "ghc912";
       name = "hydra-pleco";
 
       shell = {
@@ -46,6 +46,20 @@
         # We don't need cross platforms in the shell; should speed up evaluation
         crossPlatforms = _: [];
       };
+
+      modules = [
+        # openapi3/servant-openapi3 ship `custom-setup` to run cabal-doctest, which causes
+        # the following error:
+        #
+        #     error: The option `packages."Cabal-3.12.1.0-inplace".package.license' was
+        #     accessed but has no value defined. Try setting the option.
+        #
+        # We don't run its doctests, so force a Simple setup.
+        {
+          packages.openapi3.package.buildType = lib.mkForce "Simple";
+          packages.servant-openapi3.package.buildType = lib.mkForce "Simple";
+        }
+      ];
     };
 
     # Add exes to cabal project
@@ -66,7 +80,7 @@
     # expose haskellProject to other modules
     _module.args.haskellProject = haskellProject;
 
-    inherit (haskellFlake) packages devShells apps;
-    inherit (nativeFlake) checks;
+    inherit (haskellFlake) packages apps;
+    inherit (nativeFlake) checks devShells;
   };
 }
