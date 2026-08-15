@@ -62,6 +62,16 @@ library
   exposed-modules:
     Hydra.Pleco.Api
 
+library testlib
+  import: common-options
+  hs-source-dirs: testlib
+  exposed-modules:
+    Hydra.Pleco.Api.Gen
+
+  build-depends:
+    hedgehog,
+    hydra-pleco-api,
+
 test-suite tests
   import: common-options
   type: exitcode-stdio-1.0
@@ -71,8 +81,11 @@ test-suite tests
     Hydra.Pleco.ApiSpec
 
   build-depends:
+    hedgehog,
     hspec,
+    hspec-hedgehog,
     hydra-pleco-api,
+    hydra-pleco-api:testlib,
 
   ghc-options:
     -threaded
