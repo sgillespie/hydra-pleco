@@ -8,8 +8,15 @@ import Test.Hspec
 import Test.Hspec.Hedgehog (hedgehog, tripping)
 
 spec :: Spec
-spec =
+spec = do
   describe "Health" $
-    it "round-trips through Aeson" $ hedgehog $ do
-      health <- forAll Gen.health
-      tripping health Aeson.encode Aeson.decode
+    it "round-trips through Aeson" $
+      hedgehog $ do
+        health <- forAll Gen.health
+        tripping health Aeson.encode Aeson.decode
+
+  describe "Subscription" $
+    it "round-trips through Aeson" $
+      hedgehog $ do
+        sub <- forAll Gen.subscription
+        tripping sub Aeson.encode Aeson.decode

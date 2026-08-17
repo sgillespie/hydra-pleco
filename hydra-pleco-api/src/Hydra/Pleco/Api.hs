@@ -1,8 +1,10 @@
 module Hydra.Pleco.Api
   ( HydraApi (..),
+    WebhooksApi (..),
     HydraApp (..),
     HealthJSON,
     Health (..),
+    Subscription (..),
     hydraApi,
     hydraOpenApi,
   ) where
@@ -16,16 +18,20 @@ import Data.Aeson
 import Data.Aeson qualified as Aeson
 import Data.OpenApi (OpenApi, ToSchema)
 import Network.HTTP.Media ((//))
-import Servant.API (Accept (..), GenericMode ((:-)), Get, MimeRender (..), MimeUnrender (..), NamedRoutes, (:>))
+import Servant.API
 import Servant.OpenApi (HasOpenApi (..))
 import Servant.Swagger.UI (SwaggerSchemaUI)
 
--- TODO[sgillespie]: Remove me!
-{-# ANN module ("HLint: ignore Use newtype instead of data" :: String) #-}
-
 -- | Documented API routes. OpenApi spec is generated from this.
 data HydraApi mode = HydraApi
-  { health :: mode :- "health" :> Get '[HealthJSON] Health
+  { health :: mode :- "health" :> Get '[HealthJSON] Health,
+    webhooks :: mode :- "webhooks" :> NamedRoutes WebhooksApi
+  }
+  deriving stock (Generic)
+
+data WebhooksApi mode = WebhooksApi
+  { subscribe :: mode :- ReqBody '[JSON] Subscription :> PostCreated '[JSON] Subscription,
+    list :: mode :- Get '[JSON] [Subscription]
   }
   deriving stock (Generic)
 
@@ -42,6 +48,11 @@ newtype Health = Health
   deriving anyclass (ToSchema)
 
 data HealthJSON
+
+newtype Subscription = Subscription
+  {url :: Text}
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass (ToSchema)
 
 instance ToJSON Health where
   toJSON Health {..} =
@@ -66,6 +77,14 @@ instance (ToJSON json) => MimeRender HealthJSON json where
 
 instance (FromJSON json) => MimeUnrender HealthJSON json where
   mimeUnrender _ = Aeson.eitherDecode
+
+instance ToJSON Subscription where
+  toJSON Subscription {url} = Aeson.object ["url" .= url]
+  toEncoding Subscription {url} = Aeson.pairs $ "url" .= url
+
+instance FromJSON Subscription where
+  parseJSON = Aeson.withObject "Subscription" $ \val ->
+    Subscription <$> val .: "url"
 
 hydraApi :: Proxy HydraApi
 hydraApi = Proxy

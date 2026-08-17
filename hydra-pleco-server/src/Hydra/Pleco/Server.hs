@@ -7,7 +7,7 @@ module Hydra.Pleco.Server
     app,
   ) where
 
-import Hydra.Pleco.Api (Health (..), HydraApi (..), HydraApp (..), hydraOpenApi)
+import Hydra.Pleco.Api (Health (..), HydraApi (..), HydraApp (..), Subscription, WebhooksApi (..), hydraOpenApi)
 
 import Control.Exception (finally)
 import Data.Text.Lazy.Builder (fromText)
@@ -30,7 +30,7 @@ import Network.Wai.Handler.Warp (Port, run)
 import Servant
 import Servant.Server.Generic (genericServeT)
 import Servant.Swagger.UI (swaggerSchemaUIServerT)
-import UnliftIO (MonadUnliftIO)
+import UnliftIO (MonadUnliftIO, modifyTVar)
 
 -- | The application monad stack
 newtype PlecoServerT m a = PlecoServerT {unPlecoServerT :: ReaderT PlecoServerEnv m a}
@@ -47,7 +47,8 @@ newtype PlecoServerT m a = PlecoServerT {unPlecoServerT :: ReaderT PlecoServerEn
 data PlecoServerEnv = PlecoServerEnv
   { pseLogNamespace :: Namespace,
     pseLogCtx :: LogContexts,
-    pseLogEnv :: LogEnv
+    pseLogEnv :: LogEnv,
+    pseSubscriptions :: TVar [Subscription]
   }
 
 instance (MonadIO io) => Katip (PlecoServerT io) where
@@ -106,12 +107,14 @@ mkPlecoServerEnv = do
       (Katip.permitItem Katip.InfoS)
       Katip.V2
   logEnv' <- Katip.registerScribe "stderr" scribe Katip.defaultScribeSettings logEnv
+  subs <- newTVarIO []
 
   pure
     PlecoServerEnv
       { pseLogNamespace = "default",
         pseLogCtx = mempty,
-        pseLogEnv = logEnv'
+        pseLogEnv = logEnv',
+        pseSubscriptions = subs
       }
 
 app :: PlecoServerEnv -> Application
@@ -132,8 +135,25 @@ server =
 apiServer :: ServerT (NamedRoutes HydraApi) (PlecoServerT Handler)
 apiServer =
   HydraApi
-    { health = healthHandler
+    { health = healthHandler,
+      webhooks = webhooksHandler
     }
 
 healthHandler :: PlecoServerT Handler Health
 healthHandler = pure (Health "pass")
+
+webhooksHandler :: ServerT (NamedRoutes WebhooksApi) (PlecoServerT Handler)
+webhooksHandler =
+  WebhooksApi
+    { subscribe = webhooksSubscribeHandler,
+      list = webhooksListHandler
+    }
+
+webhooksSubscribeHandler :: Subscription -> PlecoServerT Handler Subscription
+webhooksSubscribeHandler sub = do
+  subs <- asks pseSubscriptions
+  atomically $ modifyTVar subs (sub :)
+  pure sub
+
+webhooksListHandler :: PlecoServerT Handler [Subscription]
+webhooksListHandler = readTVarIO =<< asks pseSubscriptions
