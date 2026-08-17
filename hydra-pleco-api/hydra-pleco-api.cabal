@@ -64,6 +64,7 @@ library
   hs-source-dirs: src
   exposed-modules:
     Hydra.Pleco.Api
+    Hydra.Pleco.Api.Event
 
 library testlib
   import: common-options
