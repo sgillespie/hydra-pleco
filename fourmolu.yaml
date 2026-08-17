@@ -10,5 +10,9 @@ haddock-style-module: multi-line
 let-style: inline
 in-style: left-align
 respectful: true
-fixities: []
+fixities:
+  - "infixl 1 &"
+  - "infixl 9 %"
+  - "infixr 4 .~, ?~, %~"
+  - "infixl 8 ^."
 unicode: never

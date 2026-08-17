@@ -20,3 +20,15 @@ spec = do
       hedgehog $ do
         sub <- forAll Gen.subscription
         tripping sub Aeson.encode Aeson.decode
+
+  describe "JobsetEvent" $
+    it "round-trips through Aeson" $
+      hedgehog $ do
+        ev <- forAll Gen.jobsetEvent
+        tripping ev Aeson.encode Aeson.decode
+
+  describe "EventType" $
+    it "round-trips through Aeson" $
+      hedgehog $ do
+        ty <- forAll Gen.eventType
+        tripping ty Aeson.encode Aeson.decode
