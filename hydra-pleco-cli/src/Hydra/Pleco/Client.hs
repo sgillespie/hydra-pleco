@@ -34,6 +34,13 @@ module Hydra.Pleco.Client
     Api.Eval (..),
     Api.EvalId (..),
 
+    -- * Formatting results
+    ToTable (..),
+    toTable,
+    renderJson,
+    renderPlain,
+    renderTerminal,
+
     -- * Utilities
     JobsetSpec (..),
     parseJobsetSpec,
@@ -48,9 +55,19 @@ module Hydra.Pleco.Client
     Aeson.encodePretty,
   ) where
 
-import Hydra.Pleco.Api (Eval, EvalId, Health, HydraApi, Jobset, JobsetName, Project, ProjectId)
+import Hydra.Pleco.Api
+  ( Eval,
+    EvalId,
+    Health,
+    HydraApi,
+    Jobset,
+    JobsetName,
+    Project,
+    ProjectId,
+  )
 import Hydra.Pleco.Api qualified as Api
 import Hydra.Pleco.Client.EchoServer (runEchoServer)
+import Hydra.Pleco.Client.Formatting (ToTable (..), toTable)
 
 import Control.Exception (throwIO)
 import Data.Aeson (FromJSON, ToJSON)
@@ -96,6 +113,15 @@ runPlecoClient env@PlecoClientEnv {..} action = do
   res <- Servant.runClientM (runReaderT (unPlecoClient action) env) pceClientEnv
   either throwIO pure res
 
+renderJson :: (ToJSON json) => json -> LByteString
+renderJson = Aeson.encodePretty
+
+renderPlain :: ToTable a => a -> Text
+renderPlain = toTable
+
+renderTerminal :: ToTable a => a -> Text
+renderTerminal = toTable
+
 parseJobsetSpec :: Text -> Either Text JobsetSpec
 parseJobsetSpec spec =
   case Text.splitOn ":" spec of
@@ -129,8 +155,10 @@ findJobset (JobsetSpec projectId jobset) = do
   pure (listToMaybe jobsets)
 
 listEvals :: JobsetSpec -> PlecoClient [Eval]
-listEvals jobset =
-  maybe (pure []) getEvals =<< findJobset jobset
+listEvals jobset = do
+  jobset' <- findJobset jobset
+  allEvals <- maybe (pure []) getEvals jobset'
+  pure (filter Api.evHasNewBuilds allEvals)
   where
     getEvals :: Api.Jobset -> PlecoClient [Eval]
     getEvals Api.Jobset {jsId} = plecoClient // Api.apiJobsets // Api.jsaEvals /: jsId

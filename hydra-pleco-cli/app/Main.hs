@@ -9,6 +9,7 @@ import Hydra.Pleco.Client
     ProjectId (..),
     Scheme (..),
     ToJSON,
+    ToTable,
     encodePretty,
     findJobset,
     getEval,
@@ -30,9 +31,16 @@ import Options.Applicative qualified as Opt
 
 data GlobalOpts = GlobalOpts
   { optUrl :: !BaseUrl,
-    optVerbose :: !Bool,
+    optJson :: !OutputJson,
+    optPlain :: !OutputPlain,
     optCommand :: !Command
   }
+  deriving stock (Show)
+
+newtype OutputJson = OutputJson {unOutputJson :: Bool}
+  deriving stock (Show)
+
+newtype OutputPlain = OutputPlain {unOutputPlain :: Bool}
   deriving stock (Show)
 
 data Command
@@ -74,11 +82,14 @@ runClient action opts = flip runPlecoClient action =<< fromGlobalOpts opts
     fromGlobalOpts GlobalOpts {optUrl} = mkPlecoClientEnv optUrl
 
 -- | Same as @runClient@, but pretty prints the result as JSON
-runClient' :: (ToJSON json) => PlecoClient json -> GlobalOpts -> IO ()
-runClient' = (prettyPrintLBS <=<) . runClient
-  where
-    prettyPrintLBS :: (ToJSON json) => json -> IO ()
-    prettyPrintLBS = putLBSLn . encodePretty
+runClient' :: (ToJSON output, ToTable output) => PlecoClient output -> GlobalOpts -> IO ()
+runClient' action opts = prettyPrint opts =<< runClient action opts
+
+prettyPrint :: (ToJSON output, ToTable output) => GlobalOpts -> output -> IO ()
+prettyPrint GlobalOpts {..}
+  | unOutputJson optJson = putLBSLn . encodePretty
+  | unOutputPlain optPlain = putTextLn . Client.renderPlain
+  | otherwise = putTextLn . Client.renderTerminal
 
 run :: GlobalOpts -> IO ()
 run opts@GlobalOpts {optCommand}
@@ -99,9 +110,13 @@ runProjects CmdProjectsList = runClient' listProjects
 runProjects (CmdProjectsView p) = runClient' (getProject p)
 
 runJobsets :: JobsetsSubCommand -> GlobalOpts -> IO ()
-runJobsets (CmdJobsetsList projectId) = runClient' (listJobsets projectId Nothing)
-runJobsets (CmdJobsetsView jobset) =
-  runClient' (findJobset jobset)
+runJobsets (CmdJobsetsList projectId) opts = runClient' (listJobsets projectId Nothing) opts
+runJobsets (CmdJobsetsView jobset) opts = do
+  res <- runClient (findJobset jobset) opts
+  maybe
+    (putTextLn $ "Jobset `" <> Client.renderJobsetSpec jobset <> "' not found!")
+    (prettyPrint opts)
+    res
 
 runEvals :: EvalsSubCommand -> GlobalOpts -> IO ()
 runEvals (CmdEvalsList jobset) = runClient' (listEvals jobset)
@@ -118,7 +133,8 @@ parser :: Parser GlobalOpts
 parser = do
   GlobalOpts
     <$> parseUrlOpt
-    <*> parseVerboseOpt
+    <*> parseJsonOpt
+    <*> parsePlainOpt
     <*> parseCommand
 
 parseUrlOpt :: Parser BaseUrl
@@ -132,12 +148,23 @@ parseUrlOpt =
     readBaseUrl :: ReadM BaseUrl
     readBaseUrl = Opt.eitherReader $ first displayException . parseBaseUrl
 
-parseVerboseOpt :: Parser Bool
-parseVerboseOpt =
-  Opt.switch $
-    Opt.long "verbose"
-      <> Opt.short 'v'
-      <> Opt.help "Verbose output?"
+parseJsonOpt :: Parser OutputJson
+parseJsonOpt =
+  switch' $
+    Opt.long "json"
+      <> Opt.short 'j'
+      <> Opt.help "Display output as formatted JSON"
+  where
+    switch' = fmap OutputJson . Opt.switch
+
+parsePlainOpt :: Parser OutputPlain
+parsePlainOpt =
+  switch' $
+    Opt.long "plain"
+      <> Opt.short 'p'
+      <> Opt.help "Display output as plain text"
+  where
+    switch' = fmap OutputPlain . Opt.switch
 
 parseCommand :: Parser Command
 parseCommand =
