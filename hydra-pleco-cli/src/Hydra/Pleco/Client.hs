@@ -67,7 +67,7 @@ import Hydra.Pleco.Api
   )
 import Hydra.Pleco.Api qualified as Api
 import Hydra.Pleco.Client.EchoServer (runEchoServer)
-import Hydra.Pleco.Client.Formatting (ToTable (..), toTable)
+import Hydra.Pleco.Client.Formatting (ToTable (..), toTable, toTableFancy, toTablePlain)
 
 import Control.Exception (throwIO)
 import Data.Aeson (FromJSON, ToJSON)
@@ -116,11 +116,11 @@ runPlecoClient env@PlecoClientEnv {..} action = do
 renderJson :: (ToJSON json) => json -> LByteString
 renderJson = Aeson.encodePretty
 
-renderPlain :: ToTable a => Maybe Text -> a -> Text
-renderPlain = toTable
+renderPlain :: (ToTable a) => Maybe Text -> a -> Text
+renderPlain = toTablePlain
 
-renderTerminal :: ToTable a => Maybe Text -> a -> Text
-renderTerminal = toTable
+renderTerminal :: (ToTable a) => Maybe Text -> a -> Text
+renderTerminal = toTableFancy
 
 parseJobsetSpec :: Text -> Either Text JobsetSpec
 parseJobsetSpec spec =

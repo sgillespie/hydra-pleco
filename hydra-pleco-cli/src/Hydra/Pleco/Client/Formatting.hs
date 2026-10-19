@@ -6,6 +6,8 @@ module Hydra.Pleco.Client.Formatting
     TableOrientation (..),
     HeaderStyle (..),
     ToTable (..),
+    toTableFancy,
+    toTablePlain,
     toTable,
   ) where
 
@@ -56,6 +58,7 @@ data TableOrientation
 data HeaderStyle
   = HsUnderline
   | HsBold
+  | HsPlain
   deriving stock (Eq, Enum, Ord, Show)
 
 -- | A header style paired with its text content
@@ -83,14 +86,22 @@ instance Cell HeaderCell where
 
   buildCellView :: (StringBuilder b) => CellView HeaderCell -> b
   buildCellView view@(CellView (HeaderCell style _) _ _) =
-    stringB $
-      setSGRCode (sgrStyle style)
-        <> buildHeaderCellView view
-        <> setSGRCode sgrReset
+    withSgrStyle style (buildHeaderCellView view)
     where
+      withSgrStyle :: StringBuilder builder => HeaderStyle -> builder -> builder
+      withSgrStyle HsPlain text = text
+      withSgrStyle style' text = 
+        stringB (setSGRCode $ sgrStyle style')
+          <> text 
+          <> stringB (setSGRCode $ sgrReset style')
+
       sgrStyle HsUnderline = [SetUnderlining SingleUnderline]
       sgrStyle HsBold = [SetConsoleIntensity BoldIntensity]
-      sgrReset = [Reset]
+      sgrStyle HsPlain = []
+
+      sgrReset HsUnderline = [Reset]
+      sgrReset HsBold = [Reset]
+      sgrReset HsPlain = []
 
 buildHeaderCellView :: (StringBuilder builder) => CellView HeaderCell -> builder
 buildHeaderCellView (CellView (HeaderCell _ text) adjustL adjustR) =
@@ -240,19 +251,26 @@ instance ToTable [Eval] where
           maybe "0" Text.show evNumSucceeded
         ]
 
-toTable :: forall a. (ToTable a) => Maybe Text -> a -> Text
-toTable header =
-  (mkHeader header <>)
+toTable
+  :: forall a
+   . (ToTable a)
+  => TableOutputStyle
+  -> Maybe Text
+  -> a
+  -> Text
+toTable style header =
+  (mkHeader style header <>)
     . Table.tableStringB
     . mkTableSpec orientation colSpecs' headerSpec'
     . rowGroups
   where
     orientation = tableOrientation @a Proxy
     colSpecs' = colSpecs @a Proxy
-    headerSpec' = headerSpec @a Proxy (mkHeaderStyle orientation)
+    headerSpec' = headerSpec @a Proxy (mkTableHeaderStyle style orientation)
 
-    mkHeader Nothing = ""
-    mkHeader (Just title) =
+    mkHeader TsPlain _ = ""
+    mkHeader TsFancy Nothing = ""
+    mkHeader TsFancy (Just title) =
       toText (setSGRCode [SetUnderlining SingleUnderline])
         <> title
         <> toText (setSGRCode [Reset])
@@ -261,8 +279,15 @@ toTable header =
     mkTableSpec TStandard = columnHeaderTableS'
     mkTableSpec TTransposed = rowHeaderTableS'
 
-    mkHeaderStyle TStandard = HsUnderline
-    mkHeaderStyle TTransposed = HsBold
+    mkTableHeaderStyle TsPlain _ = HsPlain
+    mkTableHeaderStyle TsFancy TStandard = HsUnderline
+    mkTableHeaderStyle TsFancy TTransposed = HsBold
+
+toTableFancy :: ToTable a => Maybe Text -> a -> Text
+toTableFancy = toTable TsFancy
+
+toTablePlain :: ToTable a => Maybe Text -> a -> Text
+toTablePlain = toTable TsPlain
 
 -- * 'ToTable'/'TableSpec' building blocks
 
