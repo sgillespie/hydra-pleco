@@ -74,6 +74,13 @@ check-light *args:
 check-full *args:
     nix flake check {{ args }}
 
+## Local tooling
+
+# Run a local Hoogle server
+[group('tools')]
+hoogle *args=("--port 8000"):
+    hoogle server --local {{ args }}
+
 # Build all subprojects
 [group('cabal')]
 cabal-build *args:
@@ -103,3 +110,4 @@ cabal-test target='all' *args:
     export PLECO_TEST_DATABASE_URL="$pgconn dbname=test"
     export PLECO_TEST_HYDRA_SCHEMA=$(nix build --no-link --print-out-paths ".#hydra-schema")
     cabal test {{ target }} {{ args }}
+
