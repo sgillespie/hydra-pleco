@@ -82,14 +82,19 @@ runClient action opts = flip runPlecoClient action =<< fromGlobalOpts opts
     fromGlobalOpts GlobalOpts {optUrl} = mkPlecoClientEnv optUrl
 
 -- | Same as @runClient@, but pretty prints the result as JSON
-runClient' :: (ToJSON output, ToTable output) => PlecoClient output -> GlobalOpts -> IO ()
-runClient' action opts = prettyPrint opts =<< runClient action opts
+runClient'
+  :: (ToJSON output, ToTable output)
+  => PlecoClient output
+  -> Maybe Text
+  -> GlobalOpts
+  -> IO ()
+runClient' action title  opts = prettyPrint title opts =<< runClient action opts
 
-prettyPrint :: (ToJSON output, ToTable output) => GlobalOpts -> output -> IO ()
-prettyPrint GlobalOpts {..}
+prettyPrint :: (ToJSON output, ToTable output) => Maybe Text -> GlobalOpts -> output -> IO ()
+prettyPrint title GlobalOpts {..}
   | unOutputJson optJson = putLBSLn . encodePretty
-  | unOutputPlain optPlain = putTextLn . Client.renderPlain
-  | otherwise = putTextLn . Client.renderTerminal
+  | unOutputPlain optPlain = putTextLn . Client.renderPlain title
+  | otherwise = putTextLn . Client.renderTerminal title
 
 run :: GlobalOpts -> IO ()
 run opts@GlobalOpts {optCommand}
@@ -100,27 +105,34 @@ run opts@GlobalOpts {optCommand}
   | CmdEvals subCmd <- optCommand = runEvals subCmd opts
 
 runHealth :: GlobalOpts -> IO ()
-runHealth = runClient' getHealth
+runHealth = runClient' getHealth (Just "Server Health")
 
 runEcho :: Port -> IO ()
 runEcho = runEchoServer
 
 runProjects :: ProjectsSubCommand -> GlobalOpts -> IO ()
-runProjects CmdProjectsList = runClient' listProjects
-runProjects (CmdProjectsView p) = runClient' (getProject p)
+runProjects CmdProjectsList = runClient' listProjects Nothing
+runProjects (CmdProjectsView p) = runClient' (getProject p) (Just header)
+  where
+    header = "Project " <> unProjectId p
 
 runJobsets :: JobsetsSubCommand -> GlobalOpts -> IO ()
-runJobsets (CmdJobsetsList projectId) opts = runClient' (listJobsets projectId Nothing) opts
+runJobsets (CmdJobsetsList projectId) opts = 
+  runClient' (listJobsets projectId Nothing) Nothing opts
 runJobsets (CmdJobsetsView jobset) opts = do
   res <- runClient (findJobset jobset) opts
   maybe
     (putTextLn $ "Jobset `" <> Client.renderJobsetSpec jobset <> "' not found!")
-    (prettyPrint opts)
+    (prettyPrint (Just header) opts)
     res
+  where
+    header = "Jobset " <> Client.renderJobsetSpec jobset
 
 runEvals :: EvalsSubCommand -> GlobalOpts -> IO ()
-runEvals (CmdEvalsList jobset) = runClient' (listEvals jobset)
-runEvals (CmdEvalsView evalId) = runClient' (getEval evalId)
+runEvals (CmdEvalsList jobset) = runClient' (listEvals jobset) Nothing
+runEvals (CmdEvalsView evalId) = runClient' (getEval evalId) (Just header)
+  where
+    header = "Eval #" <> show (unEvalId evalId)
 
 globalOpts :: ParserInfo GlobalOpts
 globalOpts =

@@ -240,15 +240,23 @@ instance ToTable [Eval] where
           maybe "0" Text.show evNumSucceeded
         ]
 
-toTable :: forall a. (ToTable a) => a -> Text
-toTable =
-  Table.tableStringB
+toTable :: forall a. (ToTable a) => Maybe Text -> a -> Text
+toTable header =
+  (mkHeader header <>)
+    . Table.tableStringB
     . mkTableSpec orientation colSpecs' headerSpec'
     . rowGroups
   where
     orientation = tableOrientation @a Proxy
     colSpecs' = colSpecs @a Proxy
     headerSpec' = headerSpec @a Proxy (mkHeaderStyle orientation)
+
+    mkHeader Nothing = ""
+    mkHeader (Just title) =
+      toText (setSGRCode [SetUnderlining SingleUnderline])
+        <> title
+        <> toText (setSGRCode [Reset])
+        <> "\n"
 
     mkTableSpec TStandard = columnHeaderTableS'
     mkTableSpec TTransposed = rowHeaderTableS'

@@ -116,10 +116,10 @@ runPlecoClient env@PlecoClientEnv {..} action = do
 renderJson :: (ToJSON json) => json -> LByteString
 renderJson = Aeson.encodePretty
 
-renderPlain :: ToTable a => a -> Text
+renderPlain :: ToTable a => Maybe Text -> a -> Text
 renderPlain = toTable
 
-renderTerminal :: ToTable a => a -> Text
+renderTerminal :: ToTable a => Maybe Text -> a -> Text
 renderTerminal = toTable
 
 parseJobsetSpec :: Text -> Either Text JobsetSpec
