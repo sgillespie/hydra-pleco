@@ -31,17 +31,16 @@ import Options.Applicative qualified as Opt
 
 data GlobalOpts = GlobalOpts
   { optUrl :: !BaseUrl,
-    optJson :: !OutputJson,
-    optPlain :: !OutputPlain,
+    optFormat :: !OutputFormat,
     optCommand :: !Command
   }
   deriving stock (Show)
 
-newtype OutputJson = OutputJson {unOutputJson :: Bool}
-  deriving stock (Show)
-
-newtype OutputPlain = OutputPlain {unOutputPlain :: Bool}
-  deriving stock (Show)
+data OutputFormat
+  = Json
+  | Plain
+  | Terminal
+  deriving stock (Eq, Enum, Ord, Show)
 
 data Command
   = CmdHealth
@@ -72,7 +71,7 @@ data EvalsSubCommand
   deriving stock (Eq, Ord, Show)
 
 main :: IO ()
-main = Opt.execParser globalOpts >>= run
+main = run =<< Opt.execParser . globalOpts =<< defaultOutputFormat
 
 -- | Runs the 'PlecoClient' action
 runClient :: PlecoClient a -> GlobalOpts -> IO a
@@ -90,11 +89,21 @@ runClient'
   -> IO ()
 runClient' action title  opts = prettyPrint title opts =<< runClient action opts
 
+-- | Output the result in the requested format: JSON, Colorized Terminal Text, or Plain Text
 prettyPrint :: (ToJSON output, ToTable output) => Maybe Text -> GlobalOpts -> output -> IO ()
-prettyPrint title GlobalOpts {..}
-  | unOutputJson optJson = putLBSLn . encodePretty
-  | unOutputPlain optPlain = putTextLn . Client.renderPlain title
-  | otherwise = putTextLn . Client.renderTerminal title
+prettyPrint title GlobalOpts {optFormat} output =
+  case optFormat of
+    Json -> putLBSLn (encodePretty output)
+    Plain -> putTextLn (Client.renderPlain title output)
+    Terminal -> putTextLn (Client.renderTerminal title output)
+
+-- | The format used when the user names neither '--json' nor '--plain'
+defaultOutputFormat :: IO OutputFormat
+defaultOutputFormat = do
+  noColor <- lookupEnv "NO_COLOR"
+  pure $ case noColor of
+    Just value | value /= "" -> Plain
+    _ -> Terminal
 
 run :: GlobalOpts -> IO ()
 run opts@GlobalOpts {optCommand}
@@ -134,19 +143,18 @@ runEvals (CmdEvalsView evalId) = runClient' (getEval evalId) (Just header)
   where
     header = "Eval #" <> show (unEvalId evalId)
 
-globalOpts :: ParserInfo GlobalOpts
-globalOpts =
-  Opt.info (parser <**> Opt.helper) $
+globalOpts :: OutputFormat -> ParserInfo GlobalOpts
+globalOpts defFormat =
+  Opt.info (parser defFormat <**> Opt.helper) $
     Opt.fullDesc
       <> Opt.progDesc "Command line client for hydra-pleco API"
       <> Opt.header "hydra-pleco command-line client"
 
-parser :: Parser GlobalOpts
-parser = do
+parser :: OutputFormat -> Parser GlobalOpts
+parser defFormat = do
   GlobalOpts
     <$> parseUrlOpt
-    <*> parseJsonOpt
-    <*> parsePlainOpt
+    <*> parseOutputFormat defFormat
     <*> parseCommand
 
 parseUrlOpt :: Parser BaseUrl
@@ -160,23 +168,23 @@ parseUrlOpt =
     readBaseUrl :: ReadM BaseUrl
     readBaseUrl = Opt.eitherReader $ first displayException . parseBaseUrl
 
-parseJsonOpt :: Parser OutputJson
+parseOutputFormat :: OutputFormat -> Parser OutputFormat
+parseOutputFormat defFormat =
+  fromMaybe defFormat <$> optional (parseJsonOpt <|> parsePlainOpt)
+
+parseJsonOpt :: Parser OutputFormat
 parseJsonOpt =
-  switch' $
+  Opt.flag' Json $
     Opt.long "json"
       <> Opt.short 'j'
       <> Opt.help "Display output as formatted JSON"
-  where
-    switch' = fmap OutputJson . Opt.switch
 
-parsePlainOpt :: Parser OutputPlain
+parsePlainOpt :: Parser OutputFormat
 parsePlainOpt =
-  switch' $
+  Opt.flag' Plain $
     Opt.long "plain"
       <> Opt.short 'p'
       <> Opt.help "Display output as plain text"
-  where
-    switch' = fmap OutputPlain . Opt.switch
 
 parseCommand :: Parser Command
 parseCommand =

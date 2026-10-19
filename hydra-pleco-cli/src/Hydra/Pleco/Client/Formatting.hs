@@ -118,13 +118,13 @@ buildHeaderCellView (CellView (HeaderCell _ text) adjustL adjustR) =
   where
     trimL count = textB . Text.drop count
     trimR count = textB . Text.dropEnd count
-    trimBoth left right = textB . Text.drop left . Text.drop right
+    trimBoth left right = textB . Text.drop left . Text.dropEnd right
 
     padB size = replicateCharB size ' '
 
 instance ToTable Health where
   colSpecs _ = [defColSpec']
-  headerSpec _ style = titlesH' [HeaderCell style "Status:"]
+  headerSpec _ style = titlesH' [HeaderCell style "Status"]
   rowGroups Health {..} = [Table.rowG [hlStatus]]
   tableOrientation _ = TTransposed
 
@@ -133,10 +133,10 @@ instance ToTable Project where
 
   headerSpec _ style =
     titlesH'
-      [ HeaderCell style "Project ID:",
-        HeaderCell style "Enabled:",
-        HeaderCell style "Visible:",
-        HeaderCell style "Description:"
+      [ HeaderCell style "Project ID",
+        HeaderCell style "Enabled",
+        HeaderCell style "Visible",
+        HeaderCell style "Description"
       ]
 
   rowGroups Project {..} =
@@ -173,12 +173,12 @@ instance ToTable Jobset where
 
   headerSpec _ style =
     titlesH'
-      [ HeaderCell style "Jobset Name:",
-        HeaderCell style "Project:",
-        HeaderCell style "Visible:",
-        HeaderCell style "Description:",
-        HeaderCell style "Last Checked:",
-        HeaderCell style "Last Evaluated:"
+      [ HeaderCell style "Jobset Name",
+        HeaderCell style "Project",
+        HeaderCell style "Visible",
+        HeaderCell style "Description",
+        HeaderCell style "Last Checked",
+        HeaderCell style "Last Evaluated"
       ]
 
   rowGroups Jobset {..} =
@@ -220,9 +220,9 @@ instance ToTable Eval where
 
   headerSpec _ style =
     titlesH'
-      [ HeaderCell style "Eval ID:",
-        HeaderCell style "Builds:",
-        HeaderCell style "Succeeded:"
+      [ HeaderCell style "Eval ID",
+        HeaderCell style "Builds",
+        HeaderCell style "Succeeded"
       ]
 
   rowGroups Eval {..} =
