@@ -106,12 +106,15 @@ test-suite tests
   hs-source-dirs: test
   main-is: Main.hs
   other-modules:
+    Hydra.Pleco.Client.FormattingSpec
     Hydra.Pleco.CliSpec
 
   build-depends:
     hedgehog,
     hspec,
     hspec-hedgehog,
+    hydra-pleco-api,
+    hydra-pleco-api:testlib,
     hydra-pleco-cli,
     hydra-pleco-cli:testlib,
     optparse-applicative,

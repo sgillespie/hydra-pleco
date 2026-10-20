@@ -35,7 +35,6 @@ import Text.Layout.Table
 import Text.Layout.Table qualified as Table
 import Text.Layout.Table.Cell (Cell (..), CellView (..))
 import Text.Layout.Table.Spec.HeaderSpec (HeaderSpec (..))
-import Text.Layout.Table.Spec.RowGroup (nullableRowsG)
 import Text.Layout.Table.StringBuilder (StringBuilder (..))
 
 -- | Global table style; Indicates whether the output can contain ANSI escape sequences,
@@ -143,7 +142,7 @@ instance ToTable Project where
     [ Table.rowG [unProjectId prjId],
       Table.rowG [formatBool prjEnabled],
       Table.rowG [formatBool prjVisible],
-      nullableRowsG [[prjDescription]]
+      Table.rowG [fromMaybe "<null>" prjDescription]
     ]
 
   tableOrientation _ = TTransposed
@@ -185,9 +184,9 @@ instance ToTable Jobset where
     [ Table.rowG [unJobsetName jsName],
       Table.rowG [unProjectId jsProject],
       Table.rowG [formatBool jsVisible],
-      nullableRowsG [[jsDescription]],
-      nullableRowsG [[Text.show <$> jsLastCheckedTime]],
-      nullableRowsG [[Text.show <$> jsLastEvalTime]]
+      Table.rowG [fromMaybe "<null>" jsDescription],
+      Table.rowG [maybe "<null>" Text.show jsLastCheckedTime],
+      Table.rowG [maybe "<null>" Text.show jsLastEvalTime]
     ]
 
   tableOrientation _ = TTransposed

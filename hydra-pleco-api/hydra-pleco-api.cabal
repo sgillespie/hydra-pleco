@@ -76,9 +76,12 @@ library testlib
   visibility: public
   exposed-modules:
     Hydra.Pleco.Api.Gen
+    Hydra.Pleco.Api.Golden
 
   build-depends:
+    filepath,
     hedgehog,
+    hspec-golden,
     hydra-pleco-api,
 
 test-suite tests
@@ -94,7 +97,6 @@ test-suite tests
     aeson-pretty,
     hedgehog,
     hspec,
-    hspec-golden,
     hspec-hedgehog,
     hydra-pleco-api,
     hydra-pleco-api:testlib,
