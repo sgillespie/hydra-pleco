@@ -87,11 +87,11 @@ instance Cell HeaderCell where
   buildCellView view@(CellView (HeaderCell style _) _ _) =
     withSgrStyle style (buildHeaderCellView view)
     where
-      withSgrStyle :: StringBuilder builder => HeaderStyle -> builder -> builder
+      withSgrStyle :: (StringBuilder builder) => HeaderStyle -> builder -> builder
       withSgrStyle HsPlain text = text
-      withSgrStyle style' text = 
+      withSgrStyle style' text =
         stringB (setSGRCode $ sgrStyle style')
-          <> text 
+          <> text
           <> stringB (setSGRCode $ sgrReset style')
 
       sgrStyle HsUnderline = [SetUnderlining SingleUnderline]
@@ -282,10 +282,10 @@ toTable style header =
     mkTableHeaderStyle TsFancy TStandard = HsUnderline
     mkTableHeaderStyle TsFancy TTransposed = HsBold
 
-toTableFancy :: ToTable a => Maybe Text -> a -> Text
+toTableFancy :: (ToTable a) => Maybe Text -> a -> Text
 toTableFancy = toTable TsFancy
 
-toTablePlain :: ToTable a => Maybe Text -> a -> Text
+toTablePlain :: (ToTable a) => Maybe Text -> a -> Text
 toTablePlain = toTable TsPlain
 
 -- * 'ToTable'/'TableSpec' building blocks

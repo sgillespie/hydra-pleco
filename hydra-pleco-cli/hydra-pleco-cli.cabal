@@ -106,8 +106,8 @@ test-suite tests
   hs-source-dirs: test
   main-is: Main.hs
   other-modules:
-    Hydra.Pleco.Client.FormattingSpec
     Hydra.Pleco.CliSpec
+    Hydra.Pleco.Client.FormattingSpec
 
   build-depends:
     hedgehog,

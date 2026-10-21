@@ -87,7 +87,7 @@ runClient'
   -> Maybe Text
   -> GlobalOpts
   -> IO ()
-runClient' action title  opts = prettyPrint title opts =<< runClient action opts
+runClient' action title opts = prettyPrint title opts =<< runClient action opts
 
 -- | Output the result in the requested format: JSON, Colorized Terminal Text, or Plain Text
 prettyPrint :: (ToJSON output, ToTable output) => Maybe Text -> GlobalOpts -> output -> IO ()
@@ -126,7 +126,7 @@ runProjects (CmdProjectsView p) = runClient' (getProject p) (Just header)
     header = "Project " <> unProjectId p
 
 runJobsets :: JobsetsSubCommand -> GlobalOpts -> IO ()
-runJobsets (CmdJobsetsList projectId) opts = 
+runJobsets (CmdJobsetsList projectId) opts =
   runClient' (listJobsets projectId Nothing) Nothing opts
 runJobsets (CmdJobsetsView jobset) opts = do
   res <- runClient (findJobset jobset) opts

@@ -110,4 +110,3 @@ cabal-test target='all' *args:
     export PLECO_TEST_DATABASE_URL="$pgconn dbname=test"
     export PLECO_TEST_HYDRA_SCHEMA=$(nix build --no-link --print-out-paths ".#hydra-schema")
     cabal test {{ target }} {{ args }}
-
