@@ -54,6 +54,7 @@ library
   exposed-modules:
     Hydra.Pleco.Client
     Hydra.Pleco.Client.EchoServer
+    Hydra.Pleco.Client.Errors
     Hydra.Pleco.Client.Formatting
 
   build-depends:
@@ -62,9 +63,11 @@ library
     ansi-terminal,
     data-default,
     http-client,
+    http-types,
     hydra-pleco-api,
     katip,
     optparse-applicative,
+    prettyprinter,
     servant,
     servant-client,
     servant-client-core,
@@ -82,8 +85,10 @@ library testlib
 
   build-depends:
     hedgehog,
+    http-types,
     hydra-pleco-api:testlib,
     hydra-pleco-cli,
+    servant-client-core,
 
 executable pleco
   import: common-options
@@ -107,12 +112,14 @@ test-suite tests
   main-is: Main.hs
   other-modules:
     Hydra.Pleco.CliSpec
+    Hydra.Pleco.Client.ErrorsSpec
     Hydra.Pleco.Client.FormattingSpec
 
   build-depends:
     hedgehog,
     hspec,
     hspec-hedgehog,
+    http-types,
     hydra-pleco-api,
     hydra-pleco-api:testlib,
     hydra-pleco-cli,
@@ -120,6 +127,7 @@ test-suite tests
     optparse-applicative,
     servant,
     servant-client,
+    servant-client-core,
 
   ghc-options:
     -threaded

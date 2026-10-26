@@ -22,4 +22,6 @@ fixities:
   # Servant
   - "infixl 0 :-"
   - "infixr 4 :>"
+  # Prettyprinter
+  - "infixr 6 <+>"
 unicode: never

@@ -73,8 +73,9 @@ import Control.Exception (throwIO)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Aeson.Encode.Pretty qualified as Aeson
 import Data.Text qualified as Text
+import Hydra.Pleco.Client.Errors (PlecoClientError (..), fromClientError)
 import Network.HTTP.Client (defaultManagerSettings, newManager)
-import Servant.Client (AsClientT, BaseUrl, ClientEnv, ClientError, ClientM, (//), (/:))
+import Servant.Client (AsClientT, BaseUrl, ClientEnv, ClientM, (//), (/:))
 import Servant.Client qualified as Servant
 import Servant.Client.Generic (genericClientHoist)
 
@@ -92,14 +93,6 @@ newtype PlecoClientEnv = PlecoClientEnv
   { pceClientEnv :: ClientEnv
   }
 
-data PlecoClientError
-  = PlecoClientError ClientError
-  | PlecoCmdError Text
-  | PlecoUnknownError
-  deriving stock (Eq, Show)
-
-instance Exception PlecoClientError
-
 data JobsetSpec = JobsetSpec ProjectId JobsetName
   deriving stock (Eq, Ord, Show)
 
@@ -111,7 +104,10 @@ mkPlecoClientEnv url = do
 runPlecoClient :: PlecoClientEnv -> PlecoClient a -> IO a
 runPlecoClient env@PlecoClientEnv {..} action = do
   res <- Servant.runClientM (runReaderT (unPlecoClient action) env) pceClientEnv
-  either throwIO pure res
+  either
+    (throwIO . fromClientError (Servant.baseUrl pceClientEnv))
+    pure
+    res
 
 renderJson :: (ToJSON json) => json -> LByteString
 renderJson = Aeson.encodePretty
@@ -122,11 +118,11 @@ renderPlain = toTablePlain
 renderTerminal :: (ToTable a) => Maybe Text -> a -> Text
 renderTerminal = toTableFancy
 
-parseJobsetSpec :: Text -> Either Text JobsetSpec
+parseJobsetSpec :: Text -> Either PlecoClientError JobsetSpec
 parseJobsetSpec spec =
   case Text.splitOn ":" spec of
     [project, jobset] -> Right $ JobsetSpec (Api.ProjectId project) (Api.JobsetName jobset)
-    _ -> Left $ "Cannot parse jobset spec `" <> spec <> "'"
+    _ -> Left $ PlecoJobsetParseError spec
 
 renderJobsetSpec :: JobsetSpec -> Text
 renderJobsetSpec (JobsetSpec prj js) = Api.unProjectId prj <> ":" <> Api.unJobsetName js

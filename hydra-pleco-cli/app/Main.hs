@@ -5,7 +5,7 @@ import Hydra.Pleco.Client
     EvalId (..),
     JobsetSpec,
     PlecoClient,
-    PlecoClientEnv,
+    PlecoClientError,
     ProjectId (..),
     Scheme (..),
     ToJSON,
@@ -28,6 +28,8 @@ import Hydra.Pleco.Client qualified as Client
 import Network.Wai.Handler.Warp (Port)
 import Options.Applicative (Parser, ParserInfo, ReadM)
 import Options.Applicative qualified as Opt
+import System.IO (hPutStrLn)
+import UnliftIO.Exception (Handler (Handler), catches)
 
 data GlobalOpts = GlobalOpts
   { optUrl :: !BaseUrl,
@@ -71,14 +73,27 @@ data EvalsSubCommand
   deriving stock (Eq, Ord, Show)
 
 main :: IO ()
-main = run =<< Opt.execParser . globalOpts =<< defaultOutputFormat
+main = do
+  outputFormat <- defaultOutputFormat
+  opts <- Opt.execParser (globalOpts outputFormat)
+  run opts
+    `catches` [ Handler reportError,
+                Handler reportInternalError
+              ]
+
+-- | Catch-all handler for any Exception that is not a 'PlecoClientError'
+reportInternalError :: SomeException -> IO a
+reportInternalError = reportError . Client.PlecoInternalError . toText . displayException
+
+-- | Write an error to stderr and exit non-zero
+reportError :: PlecoClientError -> IO a
+reportError err = hPutStrLn stderr (displayException err) >> exitFailure
 
 -- | Runs the 'PlecoClient' action
 runClient :: PlecoClient a -> GlobalOpts -> IO a
-runClient action opts = flip runPlecoClient action =<< fromGlobalOpts opts
-  where
-    fromGlobalOpts :: GlobalOpts -> IO PlecoClientEnv
-    fromGlobalOpts GlobalOpts {optUrl} = mkPlecoClientEnv optUrl
+runClient action opts = do
+  env <- mkPlecoClientEnv (optUrl opts)
+  runPlecoClient env action
 
 -- | Same as @runClient@, but pretty prints the result as JSON
 runClient'
@@ -273,14 +288,14 @@ parseJobsetsViewCmd =
 parseJobsetSpec' :: Parser JobsetSpec
 parseJobsetSpec' =
   Opt.argument jsSpec $
-    Opt.metavar "PROJECT:NAME"
+    Opt.metavar "PROJECT:JOBSET_NAME"
       <> Opt.help "Hydra jobset descriptor"
   where
     jsSpec :: ReadM JobsetSpec
-    jsSpec = Opt.eitherReader $ withText Client.parseJobsetSpec
+    jsSpec = Opt.eitherReader (withText Client.parseJobsetSpec)
 
-    withText :: (Text -> Either Text a) -> String -> Either String a
-    withText f = first toString . f . toText
+    withText :: (Text -> Either PlecoClientError a) -> String -> Either String a
+    withText f = first displayException . f . toText
 
 evalsOpts :: ParserInfo Command
 evalsOpts = Opt.info (CmdEvals <$> parseEvalsCmd) evalsCmdInfo
