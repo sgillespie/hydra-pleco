@@ -3,6 +3,7 @@ module Hydra.Pleco.Server.ProjectsSpec (spec) where
 import Hydra.Pleco.Api (Project (..), ProjectId (..))
 import Hydra.Pleco.Client
   ( PlecoClient,
+    PlecoClientError,
     listProjects,
     mkPlecoClientEnv,
     runPlecoClient,
@@ -12,10 +13,9 @@ import Hydra.Pleco.Server (PlecoServerEnv)
 import Hydra.Pleco.Server.TestApp (mkTestEnv, withPlecoApp, withPlecoAppCatching)
 
 import Hasql.Pool (Pool)
-import Network.HTTP.Types (statusCode)
+import Network.HTTP.Types (Status, status500)
 import Network.Wai.Handler.Warp (Port)
-import Servant.Client (BaseUrl (..), ClientError (..), Scheme (Http))
-import Servant.Client qualified as Servant
+import Servant.Client (BaseUrl (..), Scheme (Http))
 import Test.Hspec
 
 spec :: SpecWith (Text, Pool)
@@ -37,7 +37,7 @@ spec = describe "Hydra.Pleco.Server.Projects" $ do
       it "returns 500 on project that does not exist" $
         withServerCatching $ \port ->
           client port (Client.getProject (ProjectId "bogus-project"))
-            `shouldThrow` hasStatus 500
+            `shouldThrow` hasStatus status500
 
 withServer :: (Port -> IO a) -> ((Text, Pool) -> IO a)
 withServer = withServerUsing withPlecoApp
@@ -58,7 +58,6 @@ client port act = do
   env <- mkPlecoClientEnv (BaseUrl Http "localhost" port "")
   runPlecoClient env act
 
-hasStatus :: Int -> Selector ClientError
-hasStatus code = \case
-  FailureResponse _ resp -> statusCode (Servant.responseStatusCode resp) == code
-  _ -> False
+hasStatus :: Status -> Selector PlecoClientError
+hasStatus code (Client.PlecoFailureResponse _ status _) = status == code
+hasStatus _ _ = False
