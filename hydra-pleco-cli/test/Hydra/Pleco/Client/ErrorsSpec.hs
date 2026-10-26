@@ -6,7 +6,7 @@ import Hydra.Pleco.Client.Gen qualified as Gen
 import Data.Text qualified as Text
 import Network.HTTP.Types (http11)
 import Servant.Client (BaseUrl (..), ClientError (..))
-import Servant.Client.Core (RequestF (..), ResponseF (..), defaultRequest)
+import Servant.Client.Core (RequestF (..), ResponseF (..))
 import Test.Hspec (Spec, describe, it)
 import Test.Hspec.Hedgehog (assert, failure, forAll, hedgehog, (===))
 
@@ -31,7 +31,7 @@ spec = describe "Hydra.Pleco.Client.Errors" $ do
         body <- forAll Gen.responseBody
 
         let servantErr = FailureResponse req resp
-            req = failureRequest baseUrl
+            req = Gen.failureRequest baseUrl
             resp = Response status mempty http11 (toLazy body)
 
             expectedBaseUrl = baseUrl {baseUrlPath = decodeUtf8 $ snd (requestPath req)}
@@ -87,10 +87,6 @@ spec = describe "Hydra.Pleco.Client.Errors" $ do
         err <- forAll Gen.plecoClientError
         for_ (parseSections err) $ \section ->
           assert $ not (Text.null (Text.strip section))
-
--- | Build a request that can be passed to 'FailureResponse'
-failureRequest :: BaseUrl -> RequestF () (BaseUrl, ByteString)
-failureRequest url = bimap (const ()) (const (url, "")) defaultRequest
 
 -- | The rendered sections of an error, split on the blank lines around the detail
 parseSections :: PlecoClientError -> [Text]

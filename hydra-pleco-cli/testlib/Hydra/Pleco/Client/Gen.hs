@@ -7,6 +7,7 @@ module Hydra.Pleco.Client.Gen
     responseBody,
     status,
     unknownClientError,
+    failureRequest,
   ) where
 
 import Hydra.Pleco.Api.Gen qualified as ApiGen
@@ -19,18 +20,14 @@ import Hydra.Pleco.Client
     Scheme (..),
   )
 
-import Control.Exception (ErrorCall (..))
 import Data.Text qualified as Text
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Network.HTTP.Types (Status (..), http11)
-import Servant.Client.Core
-  ( ClientError (..),
-    Response,
-    ResponseF (Response),
-    defaultRequest,
-  )
+import Servant.Client.Core (ClientError, RequestF, Response)
+import Servant.Client.Core qualified as Servant
+import System.IO.Error (userError)
 
 baseUrl :: Gen BaseUrl
 baseUrl =
@@ -60,7 +57,12 @@ responseBody = encodeUtf8 . Text.intercalate "\n" <$> Gen.list (Range.linear 0 1
 
 -- | An HTTP response with no headers and the HTTP version fixed to 1.1
 response :: Gen Response
-response = Response <$> status <*> pure mempty <*> pure http11 <*> (toLazy <$> responseBody)
+response =
+  Servant.Response
+    <$> status
+    <*> pure mempty
+    <*> pure http11
+    <*> (toLazy <$> responseBody)
 
 plecoClientError :: Gen PlecoClientError
 plecoClientError =
@@ -76,22 +78,26 @@ plecoClientError =
 clientError :: Gen ClientError
 clientError =
   Gen.choice
-    [ pure (ConnectionError (SomeException (ErrorCall "connection failed"))),
-      FailureResponse <$> failedRequest <*> response,
+    [ pure (Servant.ConnectionError (SomeException (userError "connection failed"))),
+      Servant.FailureResponse <$> failedRequest <*> response,
       unknownClientError
     ]
   where
     failedRequest = do
       url <- baseUrl
-      pure $ bimap (const ()) (const (url, "")) defaultRequest
+      pure $ bimap (const ()) (const (url, "")) Servant.defaultRequest
 
 -- | Servant errors that get classified as 'PlecoUnknownError'
 unknownClientError :: Gen ClientError
 unknownClientError =
   Gen.choice
-    [ DecodeFailure <$> ApiGen.title <*> response,
-      UnsupportedContentType <$> Gen.element contentTypes <*> response,
-      InvalidContentTypeHeader <$> response
+    [ Servant.DecodeFailure <$> ApiGen.title <*> response,
+      Servant.UnsupportedContentType <$> Gen.element contentTypes <*> response,
+      Servant.InvalidContentTypeHeader <$> response
     ]
   where
     contentTypes = ["application/json", "text/plain", "text/html"]
+
+-- | Build a request that can be passed to 'FailureResponse'
+failureRequest :: BaseUrl -> RequestF () (BaseUrl, ByteString)
+failureRequest url = bimap (const ()) (const (url, "")) Servant.defaultRequest
