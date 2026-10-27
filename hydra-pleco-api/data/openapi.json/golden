@@ -236,6 +236,32 @@
                 ],
                 "type": "string"
             },
+            "Problem": {
+                "properties": {
+                    "detail": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "maximum": 9223372036854775807,
+                        "minimum": -9223372036854775808,
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "format": "uri-reference",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "type",
+                    "status",
+                    "title",
+                    "detail"
+                ],
+                "type": "object"
+            },
             "Project": {
                 "properties": {
                     "declarative_input_type": {

@@ -2,6 +2,8 @@ module Hydra.Pleco.Api
   ( HydraApi (..),
     WebhooksApi (..),
     HydraApp (..),
+    ProblemJSON,
+    ProblemDetails (..),
     HealthJSON,
     Health (..),
     Subscription (..),
@@ -62,6 +64,8 @@ import Data.OpenApi
 import Data.OpenApi qualified as OpenApi
 import Data.OpenApi.Declare (execDeclare)
 import Network.HTTP.Media ((//))
+import Network.HTTP.Types (Status (..), mkStatus)
+import Network.URI (parseURIReference)
 import Optics (At (..), (%), (%~), (.~), (?~))
 import Optics.Extra (_Just)
 import Servant.API
@@ -114,6 +118,16 @@ data HydraApp mode = HydraApp
   }
   deriving stock (Generic)
 
+data ProblemDetails = ProblemDetails
+  { pdType :: URI,
+    pdStatus :: Status,
+    pdTitle :: Text,
+    pdDetail :: Text
+  }
+  deriving stock (Eq, Ord, Show)
+
+data ProblemJSON
+
 newtype Health = Health
   {hlStatus :: Text}
   deriving stock (Eq, Show, Generic)
@@ -123,6 +137,64 @@ data HealthJSON
 newtype Subscription = Subscription
   {subUrl :: Text}
   deriving stock (Eq, Show, Generic)
+
+instance ToSchema ProblemDetails where
+  -- Adapted from: https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml
+  declareNamedSchema _ = do
+    let properties =
+          InsOrd.fromList
+            [ ("type", typeProp),
+              ("status", OpenApi.toSchemaRef @Int Proxy),
+              ("title", OpenApi.toSchemaRef @Text Proxy),
+              ("detail", OpenApi.toSchemaRef @Text Proxy)
+            ]
+
+        typeProp =
+          OpenApi.Inline $
+            OpenApi.toSchema @Text Proxy
+              & #format ?~ "uri-reference"
+
+        required = ["type", "status", "title", "detail"]
+
+    pure $
+      OpenApi.NamedSchema (Just "Problem") $
+        mempty
+          & #properties .~ properties
+          & #required .~ required
+          & #type ?~ OpenApi.OpenApiObject
+
+instance ToJSON ProblemDetails where
+  toJSON ProblemDetails {..} =
+    Aeson.object
+      [ "type" .= pdType,
+        "status" .= statusCode pdStatus,
+        "title" .= pdTitle,
+        "detail" .= pdDetail
+      ]
+
+  toEncoding ProblemDetails {..} =
+    Aeson.pairs $
+      "type" .= pdType
+        <> "status" .= statusCode pdStatus
+        <> "title" .= pdTitle
+        <> "detail" .= pdDetail
+
+instance FromJSON ProblemDetails where
+  parseJSON = Aeson.withObject "ProblemDetails" $ \val -> do
+    ty <- val .: "type"
+    statusCode <- val .: "status"
+    title <- val .: "title"
+    detail <- val .: "detail"
+
+    typeUri <- maybe (fail "Invalid URI reference") pure $ parseURIReference ty
+
+    pure
+      ProblemDetails
+        { pdType = typeUri,
+          pdStatus = mkStatus statusCode mempty,
+          pdTitle = title,
+          pdDetail = detail
+        }
 
 instance ToSchema Health where
   declareNamedSchema _ = do
@@ -184,11 +256,14 @@ hydraApi = Proxy
 hydraOpenApi :: OpenApi
 hydraOpenApi =
   toOpenApi (Proxy :: Proxy (NamedRoutes HydraApi))
-    & #components % #schemas %~ (<> mkEventSchema)
+    & #components % #schemas %~ (<> mkProblemSchema <> mkEventSchema)
     & #components % #callbacks % at "jobsetEvent" ?~ mkEventCallback
     & pathCallbacks "/webhooks" % at "jobsetEvent" ?~ mkCallbackEventRef
   where
     pathCallbacks path = #paths % at path % _Just % #post % _Just % #callbacks
+
+    mkProblemSchema :: Definitions Schema
+    mkProblemSchema = execDeclare (OpenApi.declareSchemaRef @ProblemDetails Proxy) mempty
 
     mkEventSchema :: Definitions Schema
     mkEventSchema =

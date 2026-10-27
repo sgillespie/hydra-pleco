@@ -81,6 +81,7 @@ library
     http-types,
     katip,
     katip-wai,
+    mtl,
     rel8,
     servant,
     servant-client,

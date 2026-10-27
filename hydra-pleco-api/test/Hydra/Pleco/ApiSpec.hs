@@ -11,6 +11,22 @@ import Test.Hspec.Hedgehog (hedgehog, tripping)
 
 spec :: Spec
 spec = do
+  describe "ProblemDetails" $ do
+    it "round-trips through Aeson" $
+      hedgehog $ do
+        problem <- forAll Gen.problemDetails
+        tripping problem Aeson.encode Aeson.eitherDecode
+
+    it "toJSON and toEncoding matches" $ do
+      hedgehog $ do
+        problem <- forAll Gen.problemDetails
+        Aeson.decode (Aeson.encode problem) === Just (Aeson.toJSON problem)
+
+    it "conforms to OpenApi schema" $
+      hedgehog $ do
+        problem <- forAll Gen.problemDetails
+        validateToJSON problem === []
+
   describe "Health" $ do
     it "round-trips through Aeson" $
       hedgehog $ do

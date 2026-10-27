@@ -19,6 +19,8 @@ common common-options
     aeson,
     base >=4.16 && <5,
     http-media,
+    http-types,
+    network-uri,
     openapi3,
     optics,
     optics-extra,
@@ -83,6 +85,7 @@ library testlib
     hedgehog,
     hspec-golden,
     hydra-pleco-api,
+    network-uri,
 
 test-suite tests
   import: common-options

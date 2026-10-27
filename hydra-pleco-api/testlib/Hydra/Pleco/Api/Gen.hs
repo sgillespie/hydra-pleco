@@ -1,5 +1,6 @@
 module Hydra.Pleco.Api.Gen
-  ( health,
+  ( problemDetails,
+    health,
     subscription,
     jobsetEvent,
     eventType,
@@ -14,6 +15,8 @@ module Hydra.Pleco.Api.Gen
     evalId,
     title,
     url,
+    uriReference,
+    status,
   ) where
 
 import Hydra.Pleco.Api
@@ -27,6 +30,7 @@ import Hydra.Pleco.Api
     JobsetName (..),
     JobsetState (..),
     JobsetType (..),
+    ProblemDetails (..),
     Project (..),
     ProjectId (..),
     Subscription (Subscription),
@@ -35,6 +39,23 @@ import Hydra.Pleco.Api
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
+import Network.HTTP.Types (Status (..))
+import Network.URI (URI (..), nullURI)
+
+problemDetails :: Gen ProblemDetails
+problemDetails = do
+  ty <- uriReference
+  status' <- status
+  title' <- title
+  detail <- title
+
+  pure
+    ProblemDetails
+      { pdType = ty,
+        pdStatus = status',
+        pdTitle = title',
+        pdDetail = detail
+      }
 
 health :: Gen Health
 health = Health <$> Gen.element ["pass", "fail", "warn"]
@@ -198,3 +219,21 @@ url = Gen.text len chars
     len = Range.linear 0 2048
     -- latin1 should cover any URL-encoded string
     chars = Gen.latin1
+
+-- | A relative URI reference, eg '/problems/out-of-stock#read-timeout'
+uriReference :: Gen URI
+uriReference = do
+  path <- Gen.list (Range.linear 1 3) segment
+  fragment <- Gen.maybe segment
+
+  pure
+    nullURI
+      { uriPath = concatMap ("/" <>) path,
+        uriFragment = maybe "" ("#" <>) fragment
+      }
+  where
+    segment = Gen.string (Range.linear 1 16) Gen.alphaNum
+
+-- | An HTTP status, between 100 and 599
+status :: Gen Status
+status = Status <$> Gen.int (Range.linear 100 599) <*> (encodeUtf8 <$> title)
