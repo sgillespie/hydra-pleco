@@ -28,26 +28,28 @@ spec = describe "Hydra.Pleco.Server.DB.Hydra" $ do
     it "decodes the scalar columns" $ \(_, pool) -> do
       prj <- runStatement pool (projectByName "pleco")
       prj
-        `shouldBe` Project
-          { prjName = "pleco",
-            prjDisplayName = "Pleco",
-            prjDescription = Just "A visible, enabled project",
-            prjEnabled = True,
-            prjHidden = False,
-            prjOwner = "alice",
-            prjHomepage = Just "https://example.org",
-            prjDeclFile = Nothing,
-            prjDeclType = Nothing,
-            prjEnableDynCmd = False
-          }
+        `shouldBe` Just
+          Project
+            { prjName = "pleco",
+              prjDisplayName = "Pleco",
+              prjDescription = Just "A visible, enabled project",
+              prjEnabled = True,
+              prjHidden = False,
+              prjOwner = "alice",
+              prjHomepage = Just "https://example.org",
+              prjDeclFile = Nothing,
+              prjDeclType = Nothing,
+              prjEnableDynCmd = False
+            }
 
   describe "projectByName" $ do
     it "selects the expected project" $ \(_, pool) -> do
       prj <- runStatement pool (projectByName "hidden")
-      prjName prj `shouldBe` "hidden"
+      fmap prjName prj `shouldBe` Just "hidden"
 
-    it "throws when the project does not exist" $ \(_, pool) ->
-      runStatement pool (projectByName "bogus-project") `shouldThrow` isUsageError
+    it "returns nothing when the project does not exist" $ \(_, pool) -> do
+      prj <- runStatement pool (projectByName "bogus-project")
+      prj `shouldBe` Nothing
 
   describe "jobsetById" $ do
     it "selects the expected jobset" $ \(_, pool) -> do

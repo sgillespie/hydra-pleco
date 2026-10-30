@@ -4,6 +4,7 @@ module Hydra.Pleco.Api
     HydraApp (..),
     ProblemJSON,
     ProblemDetails (..),
+    StatusCode (..),
     HealthJSON,
     Health (..),
     Subscription (..),
@@ -64,7 +65,6 @@ import Data.OpenApi
 import Data.OpenApi qualified as OpenApi
 import Data.OpenApi.Declare (execDeclare)
 import Network.HTTP.Media ((//))
-import Network.HTTP.Types (Status (..), mkStatus)
 import Network.URI (parseURIReference)
 import Optics (At (..), (%), (%~), (.~), (?~))
 import Optics.Extra (_Just)
@@ -120,11 +120,15 @@ data HydraApp mode = HydraApp
 
 data ProblemDetails = ProblemDetails
   { pdType :: URI,
-    pdStatus :: Status,
+    pdStatus :: StatusCode,
     pdTitle :: Text,
     pdDetail :: Text
   }
   deriving stock (Eq, Ord, Show)
+
+newtype StatusCode = StatusCode {unStatusCode :: Int}
+  deriving stock (Eq, Ord, Show)
+  deriving newtype (FromJSON, ToJSON)
 
 data ProblemJSON
 
@@ -167,7 +171,7 @@ instance ToJSON ProblemDetails where
   toJSON ProblemDetails {..} =
     Aeson.object
       [ "type" .= pdType,
-        "status" .= statusCode pdStatus,
+        "status" .= unStatusCode pdStatus,
         "title" .= pdTitle,
         "detail" .= pdDetail
       ]
@@ -175,7 +179,7 @@ instance ToJSON ProblemDetails where
   toEncoding ProblemDetails {..} =
     Aeson.pairs $
       "type" .= pdType
-        <> "status" .= statusCode pdStatus
+        <> "status" .= unStatusCode pdStatus
         <> "title" .= pdTitle
         <> "detail" .= pdDetail
 
@@ -191,10 +195,19 @@ instance FromJSON ProblemDetails where
     pure
       ProblemDetails
         { pdType = typeUri,
-          pdStatus = mkStatus statusCode mempty,
+          pdStatus = statusCode,
           pdTitle = title,
           pdDetail = detail
         }
+
+instance Accept ProblemJSON where
+  contentType _ = "application" // "problem+json"
+
+instance (ToJSON json) => MimeRender ProblemJSON json where
+  mimeRender _ = Aeson.encode
+
+instance (FromJSON json) => MimeUnrender ProblemJSON json where
+  mimeUnrender _ = Aeson.eitherDecode
 
 instance ToSchema Health where
   declareNamedSchema _ = do

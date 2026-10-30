@@ -9,6 +9,7 @@ import Hydra.Pleco.Api (Subscription)
 import Hydra.Pleco.Server.DB (newConnectionPool)
 
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
+import Control.Monad.Except (MonadError)
 import Data.Text.Lazy.Builder (fromText)
 import Hasql.Pool (Pool)
 import Katip (ItemFormatter, Katip, KatipContext, LogContexts, LogEnv, LogItem, Namespace)
@@ -17,6 +18,7 @@ import Katip.Core qualified as Katip
 import Katip.Format.Time qualified as Katip
 import Katip.Scribes.Handle qualified as Katip
 import Network.HTTP.Client (Manager, defaultManagerSettings, newManager)
+import Servant (ServerError)
 import UnliftIO (MonadUnliftIO)
 
 -- | The application monad stack
@@ -32,6 +34,10 @@ newtype PlecoServerT m a = PlecoServerT {unPlecoServerT :: ReaderT PlecoServerEn
       MonadIO,
       MonadUnliftIO
     )
+
+deriving newtype instance
+  (MonadError ServerError m)
+  => MonadError ServerError (PlecoServerT m)
 
 -- | The reader environment
 data PlecoServerEnv = PlecoServerEnv

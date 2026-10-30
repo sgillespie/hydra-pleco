@@ -189,9 +189,9 @@ newtype JobsetEvalId = JobsetEvalId {unJobsetEvalId :: Int64}
 eachProject :: Statement () [Project Result]
 eachProject = Rel8.run $ Rel8.select (Rel8.each projectSchema)
 
-projectByName :: Text -> Statement () (Project Result)
+projectByName :: Text -> Statement () (Maybe (Project Result))
 projectByName name =
-  Rel8.run1 $
+  Rel8.runMaybe $
     Rel8.select $ do
       projects <- Rel8.each projectSchema
       Rel8.where_ $ prjName projects ==. Rel8.lit name

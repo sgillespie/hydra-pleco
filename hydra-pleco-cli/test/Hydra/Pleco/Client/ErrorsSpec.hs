@@ -1,6 +1,5 @@
 module Hydra.Pleco.Client.ErrorsSpec (spec) where
 
-import Hydra.Pleco.Api.Gen qualified as Gen
 import Hydra.Pleco.Client.Errors (PlecoClientError (..), fromClientError)
 import Hydra.Pleco.Client.Gen qualified as Gen
 

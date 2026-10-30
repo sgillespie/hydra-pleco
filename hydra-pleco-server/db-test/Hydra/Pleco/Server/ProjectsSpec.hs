@@ -13,7 +13,8 @@ import Hydra.Pleco.Server (PlecoServerEnv)
 import Hydra.Pleco.Server.TestApp (mkTestEnv, withPlecoApp, withPlecoAppCatching)
 
 import Hasql.Pool (Pool)
-import Network.HTTP.Types (Status, status500)
+import Network.HTTP.Types (Status)
+import Network.HTTP.Types.Status (status404)
 import Network.Wai.Handler.Warp (Port)
 import Servant.Client (BaseUrl (..), Scheme (Http))
 import Test.Hspec
@@ -33,11 +34,10 @@ spec = describe "Hydra.Pleco.Server.Projects" $ do
           project <- client port (Client.getProject (ProjectId "pleco"))
           prjId project `shouldBe` ProjectId "pleco"
 
-      -- TODO[sgillespie]: Should be a 404
-      it "returns 500 on project that does not exist" $
+      it "returns 404 on project that does not exist" $
         withServerCatching $ \port ->
           client port (Client.getProject (ProjectId "bogus-project"))
-            `shouldThrow` hasStatus status500
+            `shouldThrow` hasStatus status404
 
 withServer :: (Port -> IO a) -> ((Text, Pool) -> IO a)
 withServer = withServerUsing withPlecoApp

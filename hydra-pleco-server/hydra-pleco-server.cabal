@@ -73,15 +73,18 @@ library
 
   build-depends:
     aeson,
+    aeson-pretty,
     clock,
     hasql,
     hasql-notifications,
     hasql-pool,
     http-client,
+    http-media,
     http-types,
     katip,
     katip-wai,
     mtl,
+    network-uri,
     rel8,
     servant,
     servant-client,

@@ -16,7 +16,7 @@ module Hydra.Pleco.Api.Gen
     title,
     url,
     uriReference,
-    status,
+    statusCode,
   ) where
 
 import Hydra.Pleco.Api
@@ -33,26 +33,26 @@ import Hydra.Pleco.Api
     ProblemDetails (..),
     Project (..),
     ProjectId (..),
-    Subscription (Subscription),
+    StatusCode (..),
+    Subscription (..),
   )
 
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import Network.HTTP.Types (Status (..))
 import Network.URI (URI (..), nullURI)
 
 problemDetails :: Gen ProblemDetails
 problemDetails = do
   ty <- uriReference
-  status' <- status
+  status <- statusCode
   title' <- title
   detail <- title
 
   pure
     ProblemDetails
       { pdType = ty,
-        pdStatus = status',
+        pdStatus = status,
         pdTitle = title',
         pdDetail = detail
       }
@@ -235,5 +235,5 @@ uriReference = do
     segment = Gen.string (Range.linear 1 16) Gen.alphaNum
 
 -- | An HTTP status, between 100 and 599
-status :: Gen Status
-status = Status <$> Gen.int (Range.linear 100 599) <*> (encodeUtf8 <$> title)
+statusCode :: Gen StatusCode
+statusCode = StatusCode <$> Gen.int (Range.linear 100 599)
