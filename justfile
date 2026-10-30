@@ -46,11 +46,12 @@ fmt *args:
 
 # Check formatting without writing changes
 fmt-check *args:
-    nix build {{ args }} ".#checks.{{ system }}.treefmt"
+    nix build --no-link {{ args }} ".#checks.{{ system }}.treefmt"
 
 # Run the test suites
 test *args:
     nix build \
+      --no-link \
       {{ args }} \
       ".#checks.{{ system }}.hydra-pleco-api:test:tests" \
       ".#checks.{{ system }}.hydra-pleco-server:test:tests" \
@@ -60,6 +61,7 @@ test *args:
 # Run basic checks
 check-light *args:
     nix build \
+      --no-link \
       {{ args }} \
       ".#checks.{{ system }}.statix" \
       ".#checks.{{ system }}.deadnix" \
@@ -72,7 +74,7 @@ check-light *args:
 
 # Run the full flake check (every check, all systems)
 check-full *args:
-    nix flake check {{ args }}
+    nix flake check --no-out {{ args }}
 
 ## Local tooling
 
