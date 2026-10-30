@@ -45,15 +45,19 @@ instance Exception PlecoClientError where
 --
 -- separated by a blank line. If present, detail is indented.
 prettyError :: PlecoClientError -> Doc ann
-prettyError err =
-  Pretty.vsep $
-    case (errorDetailDoc err, errorHintDoc err) of
-      (Nothing, Nothing) -> [description]
-      (Nothing, Just hint) -> [description, hint]
-      (Just detail, Nothing) -> [description, mempty, detail]
-      (Just detail, Just hint) -> [description, mempty, detail, mempty, hint]
+prettyError err = Pretty.vsep $ description : intersperse mempty extraDetails
   where
     description = errorDescriptionDoc err
+
+    -- detail and hint as a list if they exist, separated by blank lines
+    extraDetails =
+      catMaybes
+        [ padDetail (errorDetailDoc err),
+          errorHintDoc err
+        ]
+
+    -- Add an extra line between description and detail
+    padDetail doc = (Pretty.line <>) <$> doc
 
 errorDescriptionDoc :: PlecoClientError -> Doc ann
 errorDescriptionDoc (PlecoJobsetParseError spec) =
