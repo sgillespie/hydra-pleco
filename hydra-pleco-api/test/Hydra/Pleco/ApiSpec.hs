@@ -1,11 +1,17 @@
 module Hydra.Pleco.ApiSpec (spec) where
 
-import Hydra.Pleco.Api (EventType (..))
+import Hydra.Pleco.Api
+  ( EventType (..),
+    parseProblemType,
+    problemTypeUri,
+  )
 import Hydra.Pleco.Api.Gen qualified as Gen
 
 import Data.Aeson qualified as Aeson
 import Data.OpenApi.Schema.Validation (validateToJSON)
 import Hedgehog (forAll, (===))
+import Network.URI (URI (..), nullURI)
+import Relude.Extra (fmapToSnd)
 import Test.Hspec
 import Test.Hspec.Hedgehog (hedgehog, tripping)
 
@@ -26,6 +32,22 @@ spec = do
       hedgehog $ do
         problem <- forAll Gen.problemDetails
         validateToJSON problem === []
+
+  describe "ProblemType" $ do
+    it "round-trips through its type URI" $
+      hedgehog $ do
+        ty <- forAll Gen.problemType
+        tripping ty problemTypeUri parseProblemType
+
+    it "encodes all as problem type URIs" $ do
+      let allProblemTypes = fmapToSnd (uriPath . problemTypeUri) universe
+
+      for_ allProblemTypes $ \(ty, path) -> do
+        uriPath (problemTypeUri ty) `shouldBe` path
+        parseProblemType (nullURI {uriPath = path}) `shouldBe` Just ty
+
+    it "does not parse an unknown type URI" $
+      parseProblemType (nullURI {uriPath = "/problems/nope"}) `shouldBe` Nothing
 
   describe "Health" $ do
     it "round-trips through Aeson" $

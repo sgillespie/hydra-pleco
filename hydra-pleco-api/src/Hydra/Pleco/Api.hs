@@ -4,7 +4,11 @@ module Hydra.Pleco.Api
     HydraApp (..),
     ProblemJSON,
     ProblemDetails (..),
+    ProblemType (..),
     StatusCode (..),
+    problemTypeUri,
+    problemTypeTitle,
+    parseProblemType,
     HealthJSON,
     Health (..),
     Subscription (..),
@@ -65,7 +69,7 @@ import Data.OpenApi
 import Data.OpenApi qualified as OpenApi
 import Data.OpenApi.Declare (execDeclare)
 import Network.HTTP.Media ((//))
-import Network.URI (parseURIReference)
+import Network.URI (nullURI, parseURIReference)
 import Optics (At (..), (%), (%~), (.~), (?~))
 import Optics.Extra (_Just)
 import Servant.API
@@ -129,6 +133,25 @@ data ProblemDetails = ProblemDetails
 newtype StatusCode = StatusCode {unStatusCode :: Int}
   deriving stock (Eq, Ord, Show)
   deriving newtype (FromJSON, ToJSON)
+
+-- | Identifies a 'ProblemDetails' type. This is rendered in JSON as a URI reference
+-- defined by RFC-9457.
+data ProblemType
+  = NoSuchProject
+  deriving stock (Bounded, Eq, Enum, Ord, Show)
+
+-- | Renders a 'ProblemType' as a URI reference.
+problemTypeUri :: ProblemType -> URI
+problemTypeUri NoSuchProject = nullURI {uriPath = "/problems/no-such-project"}
+
+-- | Renders the title of a 'ProblemType'. RFC-9457 specifies that it SHOULD NOT change
+-- from occurence to occurence of the problem.
+problemTypeTitle :: ProblemType -> Text
+problemTypeTitle NoSuchProject = "No such project"
+
+-- | Parse a 'ProblemType' from a URI reference, if it matches one we know.
+parseProblemType :: URI -> Maybe ProblemType
+parseProblemType uri = find ((== uri) . problemTypeUri) universe
 
 data ProblemJSON
 

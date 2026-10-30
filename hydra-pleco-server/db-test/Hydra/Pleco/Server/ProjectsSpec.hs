@@ -2,9 +2,11 @@ module Hydra.Pleco.Server.ProjectsSpec (spec) where
 
 import Hydra.Pleco.Api
   ( ProblemDetails (..),
+    ProblemType (..),
     Project (..),
     ProjectId (..),
     StatusCode (..),
+    problemTypeUri,
   )
 import Hydra.Pleco.Client (PlecoClient, PlecoClientError)
 
@@ -12,11 +14,9 @@ import Hydra.Pleco.Client qualified as Client
 import Hydra.Pleco.Server (PlecoServerEnv)
 import Hydra.Pleco.Server.TestApp (mkTestEnv, withPlecoApp, withPlecoAppCatching)
 
-import Data.Aeson qualified as Aeson
 import Hasql.Pool (Pool)
-import Network.HTTP.Types (Status)
+import Network.HTTP.Types (Status (..))
 import Network.HTTP.Types.Status (status404)
-import Network.URI (URI (..), nullURI)
 import Network.Wai.Handler.Warp (Port)
 import Servant.Client (BaseUrl (..), Scheme (Http))
 import Test.Hspec
@@ -47,12 +47,11 @@ spec = describe "Hydra.Pleco.Server.Projects" $ do
           result <- try $ client port (Client.getProject (ProjectId "bogus-project"))
 
           problem <- case result of
-            Left (Client.PlecoFailureResponse _ _ body) ->
-              either fail pure (Aeson.eitherDecodeStrict body)
+            Left (Client.PlecoProblemResponse problem) -> pure problem
             Left err -> throwIO err
             Right _ -> fail "expected a failure response"
 
-          pdType problem `shouldBe` nullURI {uriPath = "/problems/no-such-project"}
+          pdType problem `shouldBe` problemTypeUri NoSuchProject
           pdStatus problem `shouldBe` StatusCode 404
 
 -- Start the test server, run an action, then shut it down
@@ -79,8 +78,9 @@ client port act = do
   env <- Client.mkPlecoClientEnv (BaseUrl Http "localhost" port "")
   Client.runPlecoClient env act
 
--- Returns true if the the error is 'Client.PlecoFailureResponse', and its status matches
+-- Returns true if the error is a 'Client.PlecoProblemResponse' and its status matches
 -- the one specified.
 hasStatus :: Status -> Selector PlecoClientError
-hasStatus code (Client.PlecoFailureResponse _ status _) = status == code
+hasStatus code (Client.PlecoProblemResponse problem) =
+  pdStatus problem == StatusCode (statusCode code)
 hasStatus _ _ = False

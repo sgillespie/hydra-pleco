@@ -3,11 +3,21 @@ module Hydra.Pleco.Client.Errors
     fromClientError,
   ) where
 
+import Hydra.Pleco.Api
+  ( ProblemDetails (..),
+    ProblemJSON,
+    ProblemType (..),
+    StatusCode (..),
+    parseProblemType,
+  )
+
 import Data.Text qualified as Text
-import Network.HTTP.Types (Status (..))
+import Network.HTTP.Media qualified as Media
+import Network.HTTP.Types (Status (..), hContentType)
 import Prettyprinter (Doc, (<+>))
 import Prettyprinter qualified as Pretty
 import Prettyprinter.Render.Text (renderStrict)
+import Servant.API (Accept (..), MimeUnrender (..))
 import Servant.Client (BaseUrl (..), ClientError (..), ResponseF (..), showBaseUrl)
 import Servant.Client.Core (RequestF (..))
 
@@ -15,6 +25,7 @@ data PlecoClientError
   = PlecoJobsetParseError Text
   | PlecoConnectionFailure BaseUrl
   | PlecoFailureResponse BaseUrl Status ByteString
+  | PlecoProblemResponse ProblemDetails
   | PlecoUnknownError BaseUrl ClientError
   | PlecoInternalError Text
   deriving stock (Eq, Show)
@@ -51,6 +62,8 @@ errorDescriptionDoc (PlecoConnectionFailure baseUrl) =
   "Could not connect to" <+> quoted (Pretty.pretty (showBaseUrl baseUrl))
 errorDescriptionDoc (PlecoFailureResponse url status respBody) =
   failureResponseDoc url status respBody
+errorDescriptionDoc (PlecoProblemResponse problem) =
+  problemDoc problem
 errorDescriptionDoc (PlecoUnknownError url _) =
   "Unexpected error from" <+> quoted (Pretty.pretty (showBaseUrl url))
 errorDescriptionDoc (PlecoInternalError _) =
@@ -69,11 +82,23 @@ failureResponseDoc url status _ =
         <> ":"
         <+> Pretty.pretty (decodeUtf8 @Text (statusMessage status))
 
+-- | Render the 'ProblemDetails' verbatim from the server. Use detail if it exists,
+-- otherwise use title, and if that doesn't exist use a generic HTTP failure message.
+problemDoc :: ProblemDetails -> Doc ann
+problemDoc ProblemDetails {..}
+  | not (Text.null detail) = Pretty.pretty detail
+  | not (Text.null title) = Pretty.pretty title
+  | otherwise = "Request failed: HTTP" <+> Pretty.pretty (unStatusCode pdStatus)
+  where
+    detail = unwords (words pdDetail)
+    title = unwords (words pdTitle)
+
 errorDetailDoc :: PlecoClientError -> Maybe (Doc ann)
 errorDetailDoc (PlecoJobsetParseError _) = Nothing
 errorDetailDoc (PlecoConnectionFailure _) = Nothing
 errorDetailDoc (PlecoFailureResponse _ _ respBody) =
   detailDoc (decodeUtf8 respBody)
+errorDetailDoc (PlecoProblemResponse _) = Nothing
 errorDetailDoc (PlecoUnknownError _ clientErr) =
   detailDoc (toText $ displayException clientErr)
 errorDetailDoc (PlecoInternalError detail) =
@@ -83,8 +108,14 @@ errorHintDoc :: PlecoClientError -> Maybe (Doc ann)
 errorHintDoc (PlecoJobsetParseError {}) = Nothing
 errorHintDoc (PlecoConnectionFailure {}) = Just "Is the server running?"
 errorHintDoc (PlecoFailureResponse {}) = Nothing
+errorHintDoc (PlecoProblemResponse problem) =
+  problemHint =<< parseProblemType (pdType problem)
 errorHintDoc (PlecoUnknownError {}) = Just bugReport
 errorHintDoc (PlecoInternalError {}) = Just bugReport
+
+-- | Generate a hint from a 'ProblemType'
+problemHint :: ProblemType -> Maybe (Doc ann)
+problemHint NoSuchProject = Just "Run `pleco project list' to see the available projects."
 
 bugReport :: Doc ann
 bugReport = "Please report this bug at https://github.com/sgillespie/hydra-pleco/issues"
@@ -118,6 +149,19 @@ fromFailureResponse
   -> ResponseF LByteString
   -> PlecoClientError
 fromFailureResponse baseUrl Request {..} Response {..} =
-  PlecoFailureResponse baseUrl' responseStatusCode (toStrict responseBody)
+  let -- The response document, if its content-type is problem+json
+      problemDetails
+        | isProblemJson = rightToMaybe $ mimeUnrender (Proxy @ProblemJSON) responseBody
+        | otherwise = Nothing
+
+      failureResponse =
+        PlecoFailureResponse
+          (baseUrl {baseUrlPath = decodeUtf8 $ snd requestPath})
+          responseStatusCode
+          (toStrict responseBody)
+  in  maybe failureResponse PlecoProblemResponse problemDetails
   where
-    baseUrl' = baseUrl {baseUrlPath = decodeUtf8 $ snd requestPath}
+    isProblemJson = isJust $ do
+      (_, contentTy) <- find ((== hContentType) . fst) responseHeaders
+      mediaTy <- Media.parseAccept contentTy
+      guard $ mediaTy `Media.matches` contentType @ProblemJSON Proxy

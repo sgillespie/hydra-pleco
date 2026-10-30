@@ -1,5 +1,6 @@
 module Hydra.Pleco.Api.Gen
   ( problemDetails,
+    problemType,
     health,
     subscription,
     jobsetEvent,
@@ -31,6 +32,7 @@ import Hydra.Pleco.Api
     JobsetState (..),
     JobsetType (..),
     ProblemDetails (..),
+    ProblemType,
     Project (..),
     ProjectId (..),
     StatusCode (..),
@@ -56,6 +58,9 @@ problemDetails = do
         pdTitle = title',
         pdDetail = detail
       }
+
+problemType :: Gen ProblemType
+problemType = Gen.element universe
 
 health :: Gen Health
 health = Health <$> Gen.element ["pass", "fail", "warn"]

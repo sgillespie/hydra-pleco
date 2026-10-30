@@ -1,5 +1,6 @@
 module Hydra.Pleco.Client.ErrorsSpec (spec) where
 
+import Hydra.Pleco.Api.Gen qualified as ApiGen
 import Hydra.Pleco.Client.Errors (PlecoClientError (..), fromClientError)
 import Hydra.Pleco.Client.Gen qualified as Gen
 
@@ -38,6 +39,16 @@ spec = describe "Hydra.Pleco.Client.Errors" $ do
 
         fromClientError baseUrl servantErr
           === PlecoFailureResponse expectedBaseUrl status body
+
+    it "maps a problem+json response to PlecoProblemResponse" $
+      hedgehog $ do
+        baseUrl <- forAll Gen.baseUrl
+        problem <- forAll ApiGen.problemDetails
+        resp <- forAll (Gen.problemResponse problem)
+
+        let servantErr = FailureResponse (Gen.failureRequest baseUrl) resp
+
+        fromClientError baseUrl servantErr === PlecoProblemResponse problem
 
     it "maps other ClientErrors to PlecoUnknownError" $
       hedgehog $ do

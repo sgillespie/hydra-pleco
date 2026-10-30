@@ -3,6 +3,7 @@ module Hydra.Pleco.Client.Gen
     clientError,
     jobsetSpec,
     plecoClientError,
+    problemResponse,
     response,
     responseBody,
     status,
@@ -10,6 +11,7 @@ module Hydra.Pleco.Client.Gen
     failureRequest,
   ) where
 
+import Hydra.Pleco.Api (ProblemDetails, ProblemJSON)
 import Hydra.Pleco.Api.Gen qualified as ApiGen
 import Hydra.Pleco.Client
   ( BaseUrl (..),
@@ -24,7 +26,9 @@ import Data.Text qualified as Text
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import Network.HTTP.Types (Status (..), http11)
+import Network.HTTP.Media (RenderHeader (..))
+import Network.HTTP.Types (Status (..), hContentType, http11)
+import Servant.API (Accept (..), MimeRender (..))
 import Servant.Client.Core (ClientError, RequestF, Response)
 import Servant.Client.Core qualified as Servant
 import System.IO.Error (userError)
@@ -54,6 +58,16 @@ response =
     <*> pure http11
     <*> (toLazy <$> responseBody)
 
+-- | A problem+json response, calculated from 'ProblemDetails'
+problemResponse :: ProblemDetails -> Gen Response
+problemResponse problem = do
+  status' <- status
+
+  let headers = fromList [(hContentType, renderHeader $ contentType @ProblemJSON Proxy)]
+      body = mimeRender (Proxy @ProblemJSON) problem
+
+  pure (Servant.Response status' headers http11 body)
+
 -- \| An HTTP status, between 100 and 599
 status :: Gen Status
 status = Status <$> Gen.int (Range.linear 100 599) <*> (encodeUtf8 <$> ApiGen.title)
@@ -70,6 +84,7 @@ plecoClientError =
     [ PlecoJobsetParseError <$> ApiGen.title,
       PlecoConnectionFailure <$> baseUrl,
       PlecoFailureResponse <$> baseUrl <*> status <*> responseBody,
+      PlecoProblemResponse <$> ApiGen.problemDetails,
       PlecoUnknownError <$> baseUrl <*> unknownClientError,
       PlecoInternalError <$> ApiGen.title
     ]
@@ -92,11 +107,11 @@ unknownClientError :: Gen ClientError
 unknownClientError =
   Gen.choice
     [ Servant.DecodeFailure <$> ApiGen.title <*> response,
-      Servant.UnsupportedContentType <$> Gen.element contentTypes <*> response,
+      Servant.UnsupportedContentType <$> Gen.element mediaTypes <*> response,
       Servant.InvalidContentTypeHeader <$> response
     ]
   where
-    contentTypes = ["application/json", "text/plain", "text/html"]
+    mediaTypes = ["application/json", "text/plain", "text/html"]
 
 -- | Build a request that can be passed to 'FailureResponse'
 failureRequest :: BaseUrl -> RequestF () (BaseUrl, ByteString)

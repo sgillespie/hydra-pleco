@@ -63,6 +63,7 @@ library
     ansi-terminal,
     data-default,
     http-client,
+    http-media,
     http-types,
     hydra-pleco-api,
     katip,
@@ -85,9 +86,12 @@ library testlib
 
   build-depends:
     hedgehog,
+    http-media,
     http-types,
+    hydra-pleco-api,
     hydra-pleco-api:testlib,
     hydra-pleco-cli,
+    servant,
     servant-client-core,
 
 executable pleco

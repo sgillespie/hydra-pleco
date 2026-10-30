@@ -3,7 +3,6 @@ module Hydra.Pleco.Server.ErrorSpec (spec) where
 import Hydra.Pleco.Api (ProblemDetails (..), ProjectId (..), StatusCode (..))
 import Hydra.Pleco.Api.Gen qualified as ApiGen
 import Hydra.Pleco.Server.Error (noSuchProjectError, serverError)
-import Hydra.Pleco.Server.Gen qualified as Gen
 
 import Data.Aeson qualified as Aeson
 import Data.List (lookup)
@@ -19,7 +18,7 @@ spec = describe "Hydra.Pleco.Server.Error" $ do
   describe "serverError" $
     it "reports the response status in pdStatus" $
       hedgehog $ do
-        problemTy <- forAll Gen.problemType
+        problemTy <- forAll ApiGen.problemType
         detail <- forAll ApiGen.title
 
         let err = serverError problemTy detail
