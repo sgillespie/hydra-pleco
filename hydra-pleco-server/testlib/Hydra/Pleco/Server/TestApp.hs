@@ -35,9 +35,7 @@ mkTestEnv connInfo pool initialSubs = do
 withPlecoApp :: PlecoServerEnv -> (Port -> IO a) -> IO a
 withPlecoApp env = Warp.testWithApplication (pure (app env))
 
--- | As 'withPlecoApp', but leaving Warp to turn an escaping exception into the 500
--- it serves in production. Use this only where the response is what is under test;
--- the exception is swallowed rather than reported, so a handler bug looks like a 500.
+-- | Same as 'withPlecoApp', but all exceptions are silently ignored
 withPlecoAppCatching :: PlecoServerEnv -> (Port -> IO a) -> IO a
 withPlecoAppCatching env = Warp.withApplicationSettings quietSettings (pure (app env))
 

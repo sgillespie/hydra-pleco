@@ -3,6 +3,7 @@ module Hydra.Pleco.Server.Error
     ProblemType (..),
     problemTypeUri,
     problemTypeTitle,
+    serverError,
     noSuchProjectError,
   ) where
 
@@ -27,7 +28,7 @@ instance Exception PlecoServerError
 
 data ProblemType
   = NoSuchProject
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Bounded, Eq, Enum, Ord, Show)
 
 problemTypeUri :: ProblemType -> URI
 problemTypeUri NoSuchProject = nullURI {uriPath = "/problems/no-such-project"}

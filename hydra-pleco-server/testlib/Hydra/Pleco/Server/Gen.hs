@@ -1,5 +1,6 @@
 module Hydra.Pleco.Server.Gen
-  ( project,
+  ( problemType,
+    project,
     jobsetEval,
     hydraNotification,
   ) where
@@ -12,11 +13,15 @@ import Hydra.Pleco.Server.DB.Hydra
     JobsetId (..),
     Project (..),
   )
+import Hydra.Pleco.Server.Error (ProblemType)
 
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Rel8 (Result)
+
+problemType :: Gen ProblemType
+problemType = Gen.element universe
 
 project :: Gen (Project Result)
 project = do

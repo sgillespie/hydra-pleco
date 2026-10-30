@@ -137,11 +137,13 @@ test-suite tests
   main-is: Main.hs
   other-modules:
     Hydra.Pleco.Server.DB.HydraSpec
+    Hydra.Pleco.Server.ErrorSpec
     Hydra.Pleco.Server.EvalSpec
     Hydra.Pleco.Server.ProjectSpec
     Hydra.Pleco.ServerSpec
 
   build-depends:
+    aeson,
     hedgehog,
     hspec,
     hspec-hedgehog,
@@ -152,6 +154,7 @@ test-suite tests
     hydra-pleco-server,
     hydra-pleco-server:testlib,
     servant-client,
+    servant-server,
     warp,
 
   ghc-options:
@@ -170,6 +173,7 @@ test-suite db-tests
     Hydra.Pleco.Server.WebhookSpec
 
   build-depends:
+    aeson,
     hasql,
     hasql-pool,
     hspec,
@@ -177,6 +181,7 @@ test-suite db-tests
     hydra-pleco-cli,
     hydra-pleco-server,
     hydra-pleco-server:testlib,
+    network-uri,
     rel8,
     servant-client,
     warp,
