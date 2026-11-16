@@ -3,11 +3,11 @@ module Hydra.Pleco.Server.Projects
   ) where
 
 import Hydra.Pleco.Api (Project (..), ProjectId (..), ProjectsApi (..))
+import Hydra.Pleco.Server.DB (eachProject, projectByName, runSession, statement)
+import Hydra.Pleco.Server.Error (noSuchProjectError)
 import Hydra.Pleco.Server.Jobsets (listJobsetsHandler)
 import Hydra.Pleco.Server.Monad (PlecoServerEnv (..), PlecoServerT)
 import Hydra.Pleco.Server.Projects.DB (fromProject)
-import Hydra.Pleco.Server.DB (eachProject, projectByName, runSession, statement)
-import Hydra.Pleco.Server.Error (noSuchProjectError)
 
 import Servant (Handler, HasServer (..), NamedRoutes, throwError)
 

@@ -5,16 +5,25 @@ module Hydra.Pleco.Server.TestApp
     withPlecoServerCatching,
     withPlecoApp,
     withPlecoAppCatching,
+    client,
+    hasStatus,
+    withProblemResponse,
   ) where
 
-import Hydra.Pleco.Api (Subscription)
+import Hydra.Pleco.Api (ProblemDetails (..), StatusCode (..), Subscription)
+import Hydra.Pleco.Client (PlecoClient, PlecoClientError (..))
+import Hydra.Pleco.Client qualified as Client
 import Hydra.Pleco.Server (PlecoServerEnv (..), app)
 
 import Hasql.Pool (Pool)
 import Katip qualified
 import Network.HTTP.Client (defaultManagerSettings, newManager)
+import Network.HTTP.Types (Status (..))
 import Network.Wai.Handler.Warp (Port)
 import Network.Wai.Handler.Warp qualified as Warp
+import Servant.Client (BaseUrl (..), Scheme (..))
+import Test.Hspec (Expectation, Selector)
+import UnliftIO (throwIO)
 
 mkTestEnv :: Text -> Pool -> [Subscription] -> IO PlecoServerEnv
 mkTestEnv connInfo pool initialSubs = do
@@ -63,3 +72,28 @@ withPlecoAppCatching env = Warp.withApplicationSettings quietSettings (pure (app
 quietSettings :: Warp.Settings
 quietSettings = Warp.setOnException (\_ _ -> pass) Warp.defaultSettings
 
+-- | Run a real request against the test server and return the result
+client :: Port -> PlecoClient a -> IO a
+client port act = do
+  env <- Client.mkPlecoClientEnv (BaseUrl Http "localhost" port "")
+  Client.runPlecoClient env act
+
+-- | Returns true if the error is a 'PlecoProblemResponse' and its status matches the one
+-- specified.
+hasStatus :: Status -> Selector PlecoClientError
+hasStatus code (PlecoProblemResponse problem) =
+  pdStatus problem == StatusCode (statusCode code)
+hasStatus _ _ = False
+
+-- | Checks an API result, expected to be a 'PlecoProblemResponse', then passes the
+-- 'ProblemDetails' to the given 'Expectation'. If the result was successful or not a
+-- problem response, it fails the test.
+withProblemResponse
+  :: Either PlecoClientError a
+  -> (ProblemDetails -> Expectation)
+  -> Expectation
+withProblemResponse result expect =
+  case result of
+    Left (PlecoProblemResponse problem) -> expect problem
+    Left err -> throwIO err
+    Right _ -> fail "expected a failure response"

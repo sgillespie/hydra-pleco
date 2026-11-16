@@ -11,11 +11,11 @@ import Hydra.Pleco.Client
     ToJSON,
     ToTable,
     encodePretty,
+    findEvals,
     findJobset,
     getEval,
     getHealth,
     getProject,
-    listEvals,
     listJobsets,
     listProjects,
     mkPlecoClientEnv,
@@ -153,7 +153,7 @@ runJobsets (CmdJobsetsView jobset) opts = do
     header = "Jobset " <> Client.renderJobsetSpec jobset
 
 runEvals :: EvalsSubCommand -> GlobalOpts -> IO ()
-runEvals (CmdEvalsList jobset) = runClient' (listEvals jobset) Nothing
+runEvals (CmdEvalsList jobset) = runClient' (findEvals jobset) Nothing
 runEvals (CmdEvalsView evalId) = runClient' (getEval evalId) (Just header)
   where
     header = "Eval #" <> show (unEvalId evalId)

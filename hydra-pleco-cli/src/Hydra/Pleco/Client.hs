@@ -15,6 +15,7 @@ module Hydra.Pleco.Client
     getJobset,
     findJobset,
     listEvals,
+    findEvals,
     getEval,
 
     -- * Running the reference webhook server
@@ -62,9 +63,10 @@ import Hydra.Pleco.Api
     Health,
     HydraApi,
     Jobset,
+    JobsetId,
     JobsetName,
     Project,
-    ProjectId, JobsetId,
+    ProjectId,
   )
 import Hydra.Pleco.Api qualified as Api
 import Hydra.Pleco.Client.EchoServer (runEchoServer)
@@ -76,7 +78,7 @@ import Data.Aeson.Encode.Pretty qualified as Aeson
 import Data.Text qualified as Text
 import Hydra.Pleco.Client.Errors (PlecoClientError (..), fromClientError)
 import Network.HTTP.Client (defaultManagerSettings, newManager)
-import Servant.Client (AsClientT, BaseUrl, ClientEnv, ClientM, (//), (/:))
+import Servant.Client (AsClientT, BaseUrl, ClientEnv, ClientM, (//))
 import Servant.Client qualified as Servant
 import Servant.Client.Generic (genericClientHoist)
 
@@ -134,11 +136,6 @@ plecoClient = genericClientHoist hoistClientM
 hoistClientM :: ClientM a -> PlecoClient a
 hoistClientM = PlecoClient . lift
 
---TODO[sgillespie]: Rename endpoint accessors with the conventions:
---
--- * getX: Runs `GET` on a singleton resource
--- * listX: Runs `GET` on a collection resource
--- * findX: Uses combination of other accessors and business logic to look up a resource
 getHealth :: PlecoClient Health
 getHealth = plecoClient // Api.apiHealth
 
@@ -155,18 +152,17 @@ getJobset :: JobsetId -> PlecoClient Jobset
 getJobset = plecoClient // Api.apiJobsets // Api.jsaGet
 
 findJobset :: JobsetSpec -> PlecoClient (Maybe Jobset)
-findJobset (JobsetSpec projectId jobset) = do
-  jobsets <- plecoClient // Api.apiProjects // Api.prjaJobsets /: projectId /: Just jobset
-  pure (listToMaybe jobsets)
+findJobset (JobsetSpec projectId jobset) =
+  listToMaybe <$> listJobsets projectId (Just jobset)
 
-listEvals :: JobsetSpec -> PlecoClient [Eval]
-listEvals jobset = do
+listEvals :: JobsetId -> PlecoClient [Eval]
+listEvals = plecoClient // Api.apiJobsets // Api.jsaEvals
+
+findEvals :: JobsetSpec -> PlecoClient [Eval]
+findEvals jobset = do
   jobset' <- findJobset jobset
-  allEvals <- maybe (pure []) getEvals jobset'
+  allEvals <- maybe (pure []) (listEvals . Api.jsId) jobset'
   pure (filter Api.evHasNewBuilds allEvals)
-  where
-    getEvals :: Api.Jobset -> PlecoClient [Eval]
-    getEvals Api.Jobset {jsId} = plecoClient // Api.apiJobsets // Api.jsaEvals /: jsId
 
 getEval :: EvalId -> PlecoClient Eval
 getEval = plecoClient // Api.apiEvals // Api.evaGet

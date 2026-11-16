@@ -108,11 +108,15 @@ library testlib
     hasql,
     hasql-pool,
     hedgehog,
+    hspec,
     http-client,
+    http-types,
     hydra-pleco-api:testlib,
+    hydra-pleco-cli,
     hydra-pleco-server,
     katip,
     rel8,
+    servant-client,
     warp,
 
 executable hydra-pleco
@@ -168,10 +172,10 @@ test-suite db-tests
   hs-source-dirs: db-test
   main-is: Main.hs
   other-modules:
+    Hydra.Pleco.Server.EvalsSpec
     Hydra.Pleco.Server.HydraDbSpec
     Hydra.Pleco.Server.JobsetsSpec
     Hydra.Pleco.Server.ProjectsSpec
-    Hydra.Pleco.Server.EvalsSpec
     Hydra.Pleco.Server.WebhookSpec
 
   build-depends:

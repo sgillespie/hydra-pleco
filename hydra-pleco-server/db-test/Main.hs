@@ -1,7 +1,7 @@
 module Main (main) where
 
-import Hydra.Pleco.Server.HydraDbSpec qualified as HydraDbSpec
 import Hydra.Pleco.Server.EvalsSpec qualified as EvalsSpec
+import Hydra.Pleco.Server.HydraDbSpec qualified as HydraDbSpec
 import Hydra.Pleco.Server.JobsetsSpec qualified as JobsetsSpec
 import Hydra.Pleco.Server.ProjectsSpec qualified as ProjectsSpec
 import Hydra.Pleco.Server.TestDb (lookupTestDb, withHydraDb)

@@ -8,8 +8,8 @@ import Hydra.Pleco.Server.DB qualified as DB
 import Hydra.Pleco.Server.Evals.DB (fromEval)
 import Hydra.Pleco.Server.Monad (PlecoServerEnv (..), PlecoServerT)
 
+import Hydra.Pleco.Server.Error (noSuchEvalError, noSuchJobsetError)
 import Servant (Handler, NamedRoutes, ServerT, throwError)
-import Hydra.Pleco.Server.Error (noSuchEvalError)
 
 evalsHandler :: ServerT (NamedRoutes EvalsApi) (PlecoServerT Handler)
 evalsHandler =
@@ -18,14 +18,21 @@ evalsHandler =
     }
 
 listEvalsHandler :: JobsetId -> PlecoServerT Handler [Eval]
-listEvalsHandler (JobsetId jobsetId) = do
+listEvalsHandler jobset@(JobsetId jobsetId) = do
   pool <- asks pseDbPool
-  evals <-
-    DB.runSession pool $
-      DB.statement () $
-        DB.jobsetEvalsByJobset (DB.JobsetId $ fromIntegral jobsetId)
 
-  pure $ map fromEval evals
+  -- Look up the jobset, then its evals. If the jobset does not exist, the result is
+  -- 'Nothing', otherwise it's 'Just evals'
+  evals <- DB.runSession pool . runMaybeT $ do
+    _ <- MaybeT $ DB.statement () (DB.jobsetById jobsetId')
+    lift $ DB.statement () (DB.jobsetEvalsByJobset jobsetId')
+
+  maybe
+    (throwError $ noSuchJobsetError jobset)
+    (pure . map fromEval)
+    evals
+  where
+    jobsetId' = DB.JobsetId (fromIntegral jobsetId)
 
 getEvalHandler :: EvalId -> PlecoServerT Handler Eval
 getEvalHandler eval@(EvalId evalId) = do

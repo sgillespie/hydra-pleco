@@ -120,6 +120,9 @@ errorHintDoc (PlecoInternalError {}) = Just bugReport
 -- | Generate a hint from a 'ProblemType'
 problemHint :: ProblemType -> Maybe (Doc ann)
 problemHint NoSuchProject = Just "Run `pleco project list' to see the available projects."
+problemHint NoSuchJobset = Just "Run `pleco jobset list PROJECT' to see the available jobsets."
+problemHint NoSuchEval =
+  Just "Run `pleco eval list PROJECT:JOBSET_NAME' to see the available evals."
 
 bugReport :: Doc ann
 bugReport = "Please report this bug at https://github.com/sgillespie/hydra-pleco/issues"

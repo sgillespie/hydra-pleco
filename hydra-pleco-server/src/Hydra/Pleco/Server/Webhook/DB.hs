@@ -16,11 +16,11 @@ fromHydraNotification notification = do
   pure $ mkEvent <$> jobset
   where
     mkEvent jobset =
-        JobsetEvent
-          { jeEventType = hydraNotificationToEventType notification,
-            jeProject = Api.ProjectId (jsProject jobset),
-            jeJobset = Api.JobsetName (jsName jobset)
-          }
+      JobsetEvent
+        { jeEventType = hydraNotificationToEventType notification,
+          jeProject = Api.ProjectId (jsProject jobset),
+          jeJobset = Api.JobsetName (jsName jobset)
+        }
 
 -- TODO[sgillespie]: Move me to "Mapping" layer?
 hydraNotificationJobsetId :: HydraNotification -> JobsetId

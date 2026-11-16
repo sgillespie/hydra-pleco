@@ -362,7 +362,14 @@
                         "description": ""
                     },
                     "404": {
-                        "description": "`id` not found"
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Problem"
+                                }
+                            }
+                        },
+                        "description": "No such eval with `id`."
                     }
                 }
             }
@@ -409,7 +416,14 @@
                         "description": ""
                     },
                     "404": {
-                        "description": "`id` not found"
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Problem"
+                                }
+                            }
+                        },
+                        "description": "No such jobset with `id`."
                     }
                 }
             }
@@ -443,7 +457,14 @@
                         "description": ""
                     },
                     "404": {
-                        "description": "`id` not found"
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Problem"
+                                }
+                            }
+                        },
+                        "description": "No such jobset with `id`."
                     }
                 }
             }
@@ -498,7 +519,7 @@
                                 }
                             }
                         },
-                        "description": "No project with that id."
+                        "description": "No such project with `id`."
                     }
                 }
             }
@@ -541,7 +562,14 @@
                         "description": "Invalid `name`"
                     },
                     "404": {
-                        "description": "`id` not found"
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Problem"
+                                }
+                            }
+                        },
+                        "description": "No such project with `id`."
                     }
                 }
             }

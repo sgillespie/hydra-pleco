@@ -10,8 +10,8 @@ import Hydra.Pleco.Server.Evals (listEvalsHandler)
 import Hydra.Pleco.Server.Jobsets.DB (fromJobset)
 import Hydra.Pleco.Server.Monad (PlecoServerEnv (..), PlecoServerT)
 
+import Hydra.Pleco.Server.Error (noSuchJobsetError, noSuchProjectError)
 import Servant (Handler, NamedRoutes, ServerT, throwError)
-import Hydra.Pleco.Server.Error (noSuchProjectError, noSuchJobsetError)
 
 jobsetsHandler :: ServerT (NamedRoutes JobsetsApi) (PlecoServerT Handler)
 jobsetsHandler =
@@ -48,7 +48,7 @@ getJobsetHandler jobset@(JobsetId jobsetId) = do
   pool <- asks pseDbPool
   dbJobset <-
     runSession pool . statement () $
-        jobsetById (DB.JobsetId $ fromIntegral jobsetId)
+      jobsetById (DB.JobsetId $ fromIntegral jobsetId)
 
   maybe
     (throwError $ noSuchJobsetError jobset)
