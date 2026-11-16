@@ -1,6 +1,8 @@
 module Main (main) where
 
 import Hydra.Pleco.Server.HydraDbSpec qualified as HydraDbSpec
+import Hydra.Pleco.Server.EvalsSpec qualified as EvalsSpec
+import Hydra.Pleco.Server.JobsetsSpec qualified as JobsetsSpec
 import Hydra.Pleco.Server.ProjectsSpec qualified as ProjectsSpec
 import Hydra.Pleco.Server.TestDb (lookupTestDb, withHydraDb)
 import Hydra.Pleco.Server.WebhookSpec qualified as WebhookSpec
@@ -14,6 +16,8 @@ main = do
     aroundAll withDb $ do
       HydraDbSpec.spec
       ProjectsSpec.spec
+      JobsetsSpec.spec
+      EvalsSpec.spec
       WebhookSpec.spec
 
 withDb :: ((Text, Pool) -> IO ()) -> IO ()

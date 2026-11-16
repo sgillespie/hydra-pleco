@@ -25,6 +25,18 @@
                 }
             }
         },
+        "responses": {
+            "Problem": {
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Problem"
+                        }
+                    }
+                },
+                "description": "Problem details"
+            }
+        },
         "schemas": {
             "Eval": {
                 "properties": {
@@ -479,7 +491,14 @@
                         "description": ""
                     },
                     "404": {
-                        "description": "`id` not found"
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Problem"
+                                }
+                            }
+                        },
+                        "description": "No project with that id."
                     }
                 }
             }

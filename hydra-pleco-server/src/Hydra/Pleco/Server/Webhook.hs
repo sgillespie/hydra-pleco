@@ -69,11 +69,11 @@ handleNotification notification = do
   PlecoServerEnv {pseDbPool, pseSubscriptions} <- ask
   subs <- readTVarIO pseSubscriptions
 
-  event <- liftIO $ runSession pseDbPool (fromHydraNotification notification)
-
-  forM_ subs $ \sub -> do
-    sendWebhook event sub
-    Katip.logFM Katip.InfoS $ "Successfully sent webhook to " <> Katip.showLS sub
+  void . runMaybeT $ do
+    event <- MaybeT $ runSession pseDbPool (fromHydraNotification notification)
+    forM_ subs $ \sub -> do
+      lift $ sendWebhook event sub
+      Katip.logFM Katip.InfoS $ "Successfully sent webhook to " <> Katip.showLS sub
 
 sendWebhook :: JobsetEvent -> Subscription -> PlecoServerT IO ()
 sendWebhook reqPayload (Subscription url) = do

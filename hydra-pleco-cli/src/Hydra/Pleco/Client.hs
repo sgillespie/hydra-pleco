@@ -12,6 +12,7 @@ module Hydra.Pleco.Client
     getProject,
     listProjects,
     listJobsets,
+    getJobset,
     findJobset,
     listEvals,
     getEval,
@@ -63,7 +64,7 @@ import Hydra.Pleco.Api
     Jobset,
     JobsetName,
     Project,
-    ProjectId,
+    ProjectId, JobsetId,
   )
 import Hydra.Pleco.Api qualified as Api
 import Hydra.Pleco.Client.EchoServer (runEchoServer)
@@ -133,6 +134,11 @@ plecoClient = genericClientHoist hoistClientM
 hoistClientM :: ClientM a -> PlecoClient a
 hoistClientM = PlecoClient . lift
 
+--TODO[sgillespie]: Rename endpoint accessors with the conventions:
+--
+-- * getX: Runs `GET` on a singleton resource
+-- * listX: Runs `GET` on a collection resource
+-- * findX: Uses combination of other accessors and business logic to look up a resource
 getHealth :: PlecoClient Health
 getHealth = plecoClient // Api.apiHealth
 
@@ -144,6 +150,9 @@ getProject = plecoClient // Api.apiProjects // Api.prjaGet
 
 listJobsets :: ProjectId -> Maybe JobsetName -> PlecoClient [Jobset]
 listJobsets = plecoClient // Api.apiProjects // Api.prjaJobsets
+
+getJobset :: JobsetId -> PlecoClient Jobset
+getJobset = plecoClient // Api.apiJobsets // Api.jsaGet
 
 findJobset :: JobsetSpec -> PlecoClient (Maybe Jobset)
 findJobset (JobsetSpec projectId jobset) = do

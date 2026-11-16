@@ -169,7 +169,9 @@ test-suite db-tests
   main-is: Main.hs
   other-modules:
     Hydra.Pleco.Server.HydraDbSpec
+    Hydra.Pleco.Server.JobsetsSpec
     Hydra.Pleco.Server.ProjectsSpec
+    Hydra.Pleco.Server.EvalsSpec
     Hydra.Pleco.Server.WebhookSpec
 
   build-depends:

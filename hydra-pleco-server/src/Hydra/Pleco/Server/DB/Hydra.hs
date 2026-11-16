@@ -197,9 +197,9 @@ projectByName name =
       Rel8.where_ $ prjName projects ==. Rel8.lit name
       pure projects
 
-jobsetById :: JobsetId -> Statement () (Jobset Result)
+jobsetById :: JobsetId -> Statement () (Maybe (Jobset Result))
 jobsetById jobsetId =
-  Rel8.run1 $
+  Rel8.runMaybe $
     Rel8.select $ do
       jobsets <- Rel8.each jobsetSchema
       Rel8.where_ $ jsId jobsets ==. Rel8.lit jobsetId
@@ -225,9 +225,9 @@ jobsetsByProjectAndName projectName jobsetName =
 
       pure jobsets
 
-jobsetEvalById :: JobsetEvalId -> Statement () (JobsetEval Result)
+jobsetEvalById :: JobsetEvalId -> Statement () (Maybe (JobsetEval Result))
 jobsetEvalById evalId =
-  Rel8.run1 $
+  Rel8.runMaybe $
     Rel8.select $ do
       evals <- Rel8.each jobsetEvalSchema
       Rel8.where_ $ jseId evals ==. Rel8.lit evalId

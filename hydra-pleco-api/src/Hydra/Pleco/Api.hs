@@ -63,11 +63,12 @@ import Data.OpenApi
     Operation,
     Referenced,
     RequestBody,
+    Response,
     Schema,
     ToSchema,
   )
 import Data.OpenApi qualified as OpenApi
-import Data.OpenApi.Declare (execDeclare)
+import Data.OpenApi.Declare (evalDeclare, execDeclare)
 import Network.HTTP.Media ((//))
 import Network.URI (nullURI, parseURIReference)
 import Optics (At (..), (%), (%~), (.~), (?~))
@@ -138,16 +139,22 @@ newtype StatusCode = StatusCode {unStatusCode :: Int}
 -- defined by RFC-9457.
 data ProblemType
   = NoSuchProject
+  | NoSuchJobset
+  | NoSuchEval
   deriving stock (Bounded, Eq, Enum, Ord, Show)
 
 -- | Renders a 'ProblemType' as a URI reference.
 problemTypeUri :: ProblemType -> URI
 problemTypeUri NoSuchProject = nullURI {uriPath = "/problems/no-such-project"}
+problemTypeUri NoSuchJobset = nullURI {uriPath = "/problems/no-such-jobset"}
+problemTypeUri NoSuchEval = nullURI {uriPath = "/problems/no-such-eval"}
 
 -- | Renders the title of a 'ProblemType'. RFC-9457 specifies that it SHOULD NOT change
 -- from occurence to occurence of the problem.
 problemTypeTitle :: ProblemType -> Text
 problemTypeTitle NoSuchProject = "No such project"
+problemTypeTitle NoSuchJobset = "No such jobset"
+problemTypeTitle NoSuchEval = "No such eval"
 
 -- | Parse a 'ProblemType' from a URI reference, if it matches one we know.
 parseProblemType :: URI -> Maybe ProblemType
@@ -295,8 +302,12 @@ hydraOpenApi =
     & #components % #schemas %~ (<> mkProblemSchema <> mkEventSchema)
     & #components % #callbacks % at "jobsetEvent" ?~ mkEventCallback
     & pathCallbacks "/webhooks" % at "jobsetEvent" ?~ mkCallbackEventRef
+    & #components % #responses % at "Problem" ?~ mkProblemResponse "Problem details"
+    & pathGetResponses "/projects/{id}" % at 404
+      ?~ OpenApi.Inline (mkProblemResponse "No such project with `id`.")
   where
     pathCallbacks path = #paths % at path % _Just % #post % _Just % #callbacks
+    pathGetResponses path = #paths % at path % _Just % #get % _Just % #responses
 
     mkProblemSchema :: Definitions Schema
     mkProblemSchema = execDeclare (OpenApi.declareSchemaRef @ProblemDetails Proxy) mempty
@@ -328,3 +339,10 @@ hydraOpenApi =
 
     mkCallbackEventRef :: Referenced Callback
     mkCallbackEventRef = OpenApi.Ref (OpenApi.Reference "jobsetEvent")
+
+    mkProblemResponse :: Text -> Response
+    mkProblemResponse desc =
+      mempty
+        & evalDeclare
+          (OpenApi.declareResponse @ProblemDetails "application/problem+json" Proxy)
+        & #description .~ desc

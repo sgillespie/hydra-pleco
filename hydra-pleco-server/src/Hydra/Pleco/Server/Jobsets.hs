@@ -10,7 +10,8 @@ import Hydra.Pleco.Server.Evals (listEvalsHandler)
 import Hydra.Pleco.Server.Jobsets.DB (fromJobset)
 import Hydra.Pleco.Server.Monad (PlecoServerEnv (..), PlecoServerT)
 
-import Servant (Handler, NamedRoutes, ServerT)
+import Servant (Handler, NamedRoutes, ServerT, throwError)
+import Hydra.Pleco.Server.Error (noSuchProjectError, noSuchJobsetError)
 
 jobsetsHandler :: ServerT (NamedRoutes JobsetsApi) (PlecoServerT Handler)
 jobsetsHandler =
@@ -20,25 +21,36 @@ jobsetsHandler =
     }
 
 listJobsetsHandler :: ProjectId -> Maybe JobsetName -> PlecoServerT Handler [Jobset]
-listJobsetsHandler (ProjectId prjName) jobset = do
+listJobsetsHandler project@(ProjectId prjName) jobset = do
   pool <- asks pseDbPool
 
+  -- Select the query to run; If the jobset name was specified, filter on both project and
+  -- jobset name, otherwise filter only on project.
   let stmt =
         maybe
           (DB.jobsetsByProject prjName)
           (DB.jobsetsByProjectAndName prjName . unJobsetName)
           jobset
 
-  jobsets <- runSession pool $ statement () stmt
+  -- Look up the project, then the jobset. If project does not exist, the result is
+  -- 'Nothing', otherwise it's 'Just jobsets'
+  jobsets <- runSession pool . runMaybeT $ do
+    _ <- MaybeT $ statement () (DB.projectByName prjName)
+    lift $ statement () stmt
 
-  pure $ map fromJobset jobsets
+  maybe
+    (throwError $ noSuchProjectError project)
+    (pure . map fromJobset)
+    jobsets
 
 getJobsetHandler :: JobsetId -> PlecoServerT Handler Jobset
-getJobsetHandler (JobsetId jobsetId) = do
+getJobsetHandler jobset@(JobsetId jobsetId) = do
   pool <- asks pseDbPool
-  jobset <-
-    runSession pool $
-      statement () $
+  dbJobset <-
+    runSession pool . statement () $
         jobsetById (DB.JobsetId $ fromIntegral jobsetId)
 
-  pure $ fromJobset jobset
+  maybe
+    (throwError $ noSuchJobsetError jobset)
+    (pure . fromJobset)
+    dbJobset

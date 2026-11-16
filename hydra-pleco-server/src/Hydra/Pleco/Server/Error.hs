@@ -2,10 +2,14 @@ module Hydra.Pleco.Server.Error
   ( PlecoServerError (..),
     serverError,
     noSuchProjectError,
+    noSuchJobsetError,
+    noSuchEvalError,
   ) where
 
 import Hydra.Pleco.Api
-  ( ProblemDetails (..),
+  ( EvalId (..),
+    JobsetId (..),
+    ProblemDetails (..),
     ProblemJSON,
     ProblemType (..),
     ProjectId (..),
@@ -32,10 +36,20 @@ instance Exception PlecoServerError
 
 problemTypeServerErr :: ProblemType -> ServerError
 problemTypeServerErr NoSuchProject = err404
+problemTypeServerErr NoSuchJobset = err404
+problemTypeServerErr NoSuchEval = err404
 
 noSuchProjectError :: ProjectId -> ServerError
 noSuchProjectError (ProjectId project) =
   serverError NoSuchProject $ "Project `" <> project <> "' does not exist"
+
+noSuchJobsetError :: JobsetId -> ServerError
+noSuchJobsetError (JobsetId jobset) =
+  serverError NoSuchJobset $ "Jobset `" <> show jobset <> "' does not exist"
+
+noSuchEvalError :: EvalId -> ServerError
+noSuchEvalError (EvalId eval) =
+  serverError NoSuchEval $ "Eval `" <> show eval <> "' does not exist"
 
 serverError :: ProblemType -> Text -> ServerError
 serverError problemTy detailText =
