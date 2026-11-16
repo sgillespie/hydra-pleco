@@ -74,7 +74,7 @@ check-light *args:
 
 # Run the full flake check (every check, all systems)
 check-full *args:
-    nix flake check --no-out {{ args }}
+    nix flake check {{ args }}
 
 ## Local tooling
 
