@@ -8,7 +8,7 @@ module Hydra.Pleco.Server
   ) where
 
 import Hydra.Pleco.Api (Health (..), HydraApi (..), HydraApp (..))
-import Hydra.Pleco.Api qualified as Api
+import Hydra.Pleco.Api.OpenApi (hydraOpenApi)
 import Hydra.Pleco.Server.DB (releaseConnectionPool, testConnection)
 import Hydra.Pleco.Server.Monad
 import Hydra.Pleco.Server.Projects (projectsHandler)
@@ -122,7 +122,7 @@ server :: ServerT (NamedRoutes HydraApp) (PlecoServerT Handler)
 server =
   HydraApp
     { appApi = apiServer,
-      appDocs = swaggerSchemaUIServerT Api.hydraOpenApi
+      appDocs = swaggerSchemaUIServerT hydraOpenApi
     }
 
 apiServer :: ServerT (NamedRoutes HydraApi) (PlecoServerT Handler)

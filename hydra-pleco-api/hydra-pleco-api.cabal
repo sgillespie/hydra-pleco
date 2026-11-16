@@ -70,6 +70,7 @@ library
     Hydra.Pleco.Api.Eval
     Hydra.Pleco.Api.Event
     Hydra.Pleco.Api.Jobset
+    Hydra.Pleco.Api.OpenApi
     Hydra.Pleco.Api.Project
 
 library testlib

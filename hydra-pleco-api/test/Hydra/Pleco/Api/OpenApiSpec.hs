@@ -1,7 +1,7 @@
 module Hydra.Pleco.Api.OpenApiSpec (spec) where
 
-import Hydra.Pleco.Api (hydraOpenApi)
 import Hydra.Pleco.Api.Golden (goldenText)
+import Hydra.Pleco.Api.OpenApi (hydraOpenApi)
 
 import Data.Aeson.Encode.Pretty qualified as Pretty
 import Optics (At (..), (%), (^?))
