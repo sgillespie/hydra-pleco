@@ -1,4 +1,4 @@
-module Hydra.Pleco.Server.Jobsets
+module Hydra.Pleco.Server.Handlers.Jobsets
   ( jobsetsHandler,
     listJobsetsHandler,
   ) where
@@ -6,8 +6,8 @@ module Hydra.Pleco.Server.Jobsets
 import Hydra.Pleco.Api (Jobset (..), JobsetId (..), JobsetName, JobsetsApi (..), ProjectId (..), unJobsetName)
 import Hydra.Pleco.Server.DB (jobsetById, runSession, statement)
 import Hydra.Pleco.Server.DB qualified as DB
-import Hydra.Pleco.Server.Evals (listEvalsHandler)
-import Hydra.Pleco.Server.Jobsets.DB (fromJobset)
+import Hydra.Pleco.Server.Handlers.Evals (listEvalsHandler)
+import Hydra.Pleco.Server.Handlers.Jobsets.DB (fromJobset)
 import Hydra.Pleco.Server.Monad (PlecoServerEnv (..), PlecoServerT)
 
 import Hydra.Pleco.Server.Error (noSuchJobsetError, noSuchProjectError)

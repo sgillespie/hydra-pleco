@@ -1,11 +1,11 @@
-module Hydra.Pleco.Server.Evals
+module Hydra.Pleco.Server.Handlers.Evals
   ( evalsHandler,
     listEvalsHandler,
   ) where
 
 import Hydra.Pleco.Api (Eval (..), EvalId (..), EvalsApi (..), JobsetId (..))
 import Hydra.Pleco.Server.DB qualified as DB
-import Hydra.Pleco.Server.Evals.DB (fromEval)
+import Hydra.Pleco.Server.Handlers.Evals.DB (fromEval)
 import Hydra.Pleco.Server.Monad (PlecoServerEnv (..), PlecoServerT)
 
 import Hydra.Pleco.Server.Error (noSuchEvalError, noSuchJobsetError)

@@ -61,15 +61,16 @@ library
     Hydra.Pleco.Server.DB
     Hydra.Pleco.Server.DB.Hydra
     Hydra.Pleco.Server.Error
-    Hydra.Pleco.Server.Evals
-    Hydra.Pleco.Server.Evals.DB
-    Hydra.Pleco.Server.Jobsets
-    Hydra.Pleco.Server.Jobsets.DB
+    Hydra.Pleco.Server.Handlers
+    Hydra.Pleco.Server.Handlers.Evals
+    Hydra.Pleco.Server.Handlers.Evals.DB
+    Hydra.Pleco.Server.Handlers.Jobsets
+    Hydra.Pleco.Server.Handlers.Jobsets.DB
+    Hydra.Pleco.Server.Handlers.Projects
+    Hydra.Pleco.Server.Handlers.Projects.DB
+    Hydra.Pleco.Server.Handlers.Webhook
+    Hydra.Pleco.Server.Handlers.Webhook.DB
     Hydra.Pleco.Server.Monad
-    Hydra.Pleco.Server.Projects
-    Hydra.Pleco.Server.Projects.DB
-    Hydra.Pleco.Server.Webhook
-    Hydra.Pleco.Server.Webhook.DB
 
   build-depends:
     aeson,
@@ -142,8 +143,8 @@ test-suite tests
   other-modules:
     Hydra.Pleco.Server.DB.HydraSpec
     Hydra.Pleco.Server.ErrorSpec
-    Hydra.Pleco.Server.EvalSpec
-    Hydra.Pleco.Server.ProjectSpec
+    Hydra.Pleco.Server.Handlers.EvalSpec
+    Hydra.Pleco.Server.Handlers.ProjectSpec
     Hydra.Pleco.ServerSpec
 
   build-depends:
@@ -172,11 +173,11 @@ test-suite db-tests
   hs-source-dirs: db-test
   main-is: Main.hs
   other-modules:
-    Hydra.Pleco.Server.EvalsSpec
+    Hydra.Pleco.Server.Handlers.EvalsSpec
+    Hydra.Pleco.Server.Handlers.JobsetsSpec
+    Hydra.Pleco.Server.Handlers.ProjectsSpec
+    Hydra.Pleco.Server.Handlers.WebhookSpec
     Hydra.Pleco.Server.HydraDbSpec
-    Hydra.Pleco.Server.JobsetsSpec
-    Hydra.Pleco.Server.ProjectsSpec
-    Hydra.Pleco.Server.WebhookSpec
 
   build-depends:
     aeson,

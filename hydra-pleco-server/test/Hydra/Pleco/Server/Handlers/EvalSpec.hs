@@ -1,9 +1,9 @@
-module Hydra.Pleco.Server.EvalSpec (spec) where
+module Hydra.Pleco.Server.Handlers.EvalSpec (spec) where
 
 import Hydra.Pleco.Api.Gen qualified as ApiGen
 import Hydra.Pleco.Server.DB.Hydra (JobsetEval (..))
-import Hydra.Pleco.Server.Evals.DB (fromEval, toEval)
 import Hydra.Pleco.Server.Gen qualified as Gen
+import Hydra.Pleco.Server.Handlers.Evals.DB (fromEval, toEval)
 
 import Hedgehog (forAll)
 import Hydra.Pleco.Api.Eval qualified as Api

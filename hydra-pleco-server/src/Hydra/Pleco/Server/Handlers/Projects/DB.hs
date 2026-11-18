@@ -1,4 +1,4 @@
-module Hydra.Pleco.Server.Projects.DB
+module Hydra.Pleco.Server.Handlers.Projects.DB
   ( fromProject,
     toProject,
   ) where

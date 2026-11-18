@@ -1,4 +1,4 @@
-module Hydra.Pleco.Server.Webhook
+module Hydra.Pleco.Server.Handlers.Webhook
   ( webhooksHandler,
     webhooksSubscribeHandler,
     webhooksListHandler,
@@ -10,8 +10,8 @@ module Hydra.Pleco.Server.Webhook
 import Hydra.Pleco.Api
 import Hydra.Pleco.Server.DB (HydraNotification, hydraNotifyChannels, newConnection, parseHydraNotification, releaseConnection, runSession)
 import Hydra.Pleco.Server.Error (PlecoServerError (..))
+import Hydra.Pleco.Server.Handlers.Webhook.DB (fromHydraNotification)
 import Hydra.Pleco.Server.Monad (PlecoServerEnv (..), PlecoServerT)
-import Hydra.Pleco.Server.Webhook.DB (fromHydraNotification)
 
 import Hasql.Notifications (listen, toPgIdentifier, waitForNotifications)
 import Katip qualified

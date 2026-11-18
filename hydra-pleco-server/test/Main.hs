@@ -2,8 +2,8 @@ module Main (main) where
 
 import Hydra.Pleco.Server.DB.HydraSpec qualified as HydraSpec
 import Hydra.Pleco.Server.ErrorSpec qualified as ErrorSpec
-import Hydra.Pleco.Server.EvalSpec qualified as EvalSpec
-import Hydra.Pleco.Server.ProjectSpec qualified as ProjectSpec
+import Hydra.Pleco.Server.Handlers.EvalSpec qualified as EvalSpec
+import Hydra.Pleco.Server.Handlers.ProjectSpec qualified as ProjectSpec
 import Hydra.Pleco.ServerSpec qualified as ServerSpec
 
 import Test.Hspec

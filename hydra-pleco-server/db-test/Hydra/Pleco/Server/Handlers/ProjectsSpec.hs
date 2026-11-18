@@ -1,4 +1,4 @@
-module Hydra.Pleco.Server.ProjectsSpec (spec) where
+module Hydra.Pleco.Server.Handlers.ProjectsSpec (spec) where
 
 import Hydra.Pleco.Api qualified as Api
 import Hydra.Pleco.Client qualified as Client
@@ -10,7 +10,7 @@ import Test.Hspec
 import UnliftIO (try)
 
 spec :: SpecWith (Text, Pool)
-spec = describe "Hydra.Pleco.Server.Projects" $ do
+spec = describe "Hydra.Pleco.Server.Handlers.Projects" $ do
   describe "projects" $ do
     describe "listProjects" $ do
       it "lists every project" $

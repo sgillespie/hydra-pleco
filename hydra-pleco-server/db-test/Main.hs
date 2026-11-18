@@ -1,11 +1,11 @@
 module Main (main) where
 
-import Hydra.Pleco.Server.EvalsSpec qualified as EvalsSpec
+import Hydra.Pleco.Server.Handlers.EvalsSpec qualified as EvalsSpec
 import Hydra.Pleco.Server.HydraDbSpec qualified as HydraDbSpec
-import Hydra.Pleco.Server.JobsetsSpec qualified as JobsetsSpec
-import Hydra.Pleco.Server.ProjectsSpec qualified as ProjectsSpec
+import Hydra.Pleco.Server.Handlers.JobsetsSpec qualified as JobsetsSpec
+import Hydra.Pleco.Server.Handlers.ProjectsSpec qualified as ProjectsSpec
 import Hydra.Pleco.Server.TestDb (lookupTestDb, withHydraDb)
-import Hydra.Pleco.Server.WebhookSpec qualified as WebhookSpec
+import Hydra.Pleco.Server.Handlers.WebhookSpec qualified as WebhookSpec
 
 import Hasql.Pool (Pool)
 import Test.Hspec

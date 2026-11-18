@@ -1,4 +1,4 @@
-module Hydra.Pleco.Server.Jobsets.DB
+module Hydra.Pleco.Server.Handlers.Jobsets.DB
   ( fromJobset,
     toJobset,
   ) where

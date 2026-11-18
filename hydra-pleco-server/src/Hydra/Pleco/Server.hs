@@ -10,16 +10,13 @@ module Hydra.Pleco.Server
 import Hydra.Pleco.Api (Health (..), HydraApi (..), HydraApp (..))
 import Hydra.Pleco.Api.OpenApi (hydraOpenApi)
 import Hydra.Pleco.Server.DB (releaseConnectionPool, testConnection)
+import Hydra.Pleco.Server.Handlers qualified as Handlers
 import Hydra.Pleco.Server.Monad
-import Hydra.Pleco.Server.Projects (projectsHandler)
-import Hydra.Pleco.Server.Webhook (watchHydraEvents, webhooksHandler)
 
 import Data.Aeson ((.=))
 import Data.Aeson qualified as Aeson
 import Data.UUID qualified as UUID
 import Hasql.Pool (Pool)
-import Hydra.Pleco.Server.Evals (evalsHandler)
-import Hydra.Pleco.Server.Jobsets (jobsetsHandler)
 import Katip qualified
 import Katip.Wai (ApplicationT, Formatter, MiddlewareT, Request, Response)
 import Katip.Wai qualified as KatipWai
@@ -67,7 +64,7 @@ runHydraWatcher :: PlecoServerT IO ()
 runHydraWatcher = do
   connInfo <- asks pseDbConnInfo
   Katip.logFM Katip.InfoS $ "Starting Hydra watcher at '" <> Katip.ls connInfo <> "'"
-  watchHydraEvents
+  Handlers.watchHydraEvents
 
 settings :: Port -> Settings
 settings port = Warp.setPort port Warp.defaultSettings
@@ -129,10 +126,10 @@ apiServer :: ServerT (NamedRoutes HydraApi) (PlecoServerT Handler)
 apiServer =
   HydraApi
     { apiHealth = healthHandler,
-      apiWebhooks = webhooksHandler,
-      apiProjects = projectsHandler,
-      apiJobsets = jobsetsHandler,
-      apiEvals = evalsHandler
+      apiWebhooks = Handlers.webhooksHandler,
+      apiProjects = Handlers.projectsHandler,
+      apiJobsets = Handlers.jobsetsHandler,
+      apiEvals = Handlers.evalsHandler
     }
 
 healthHandler :: PlecoServerT Handler Health

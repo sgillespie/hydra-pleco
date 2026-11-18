@@ -1,4 +1,4 @@
-module Hydra.Pleco.Server.WebhookSpec (spec) where
+module Hydra.Pleco.Server.Handlers.WebhookSpec (spec) where
 
 import Hydra.Pleco.Api
   ( EventType (..),
@@ -9,9 +9,9 @@ import Hydra.Pleco.Api
   )
 import Hydra.Pleco.Client.EchoServer (jobsetEventApp)
 import Hydra.Pleco.Server (runPlecoServerT)
+import Hydra.Pleco.Server.Handlers.Webhook (sendWebhook, watchHydraEvents)
 import Hydra.Pleco.Server.Monad (PlecoServerEnv (..))
 import Hydra.Pleco.Server.TestApp (mkTestEnv)
-import Hydra.Pleco.Server.Webhook (sendWebhook, watchHydraEvents)
 
 import Hasql.Pool (Pool)
 import Hasql.Pool qualified as Pool
@@ -33,7 +33,7 @@ settleMicros :: Int
 settleMicros = 500_000
 
 spec :: SpecWith (Text, Pool)
-spec = describe "Hydra.Pleco.Server.Webhook" $ do
+spec = describe "Hydra.Pleco.Server.Handlers.Webhook" $ do
   describe "sendWebhook" $
     it "sends the expected event" $ \(connInfo, pool) ->
       withReceiver $ \port received -> do

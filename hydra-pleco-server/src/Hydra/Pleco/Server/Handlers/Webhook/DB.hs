@@ -1,4 +1,4 @@
-module Hydra.Pleco.Server.Webhook.DB
+module Hydra.Pleco.Server.Handlers.Webhook.DB
   ( fromHydraNotification,
   ) where
 

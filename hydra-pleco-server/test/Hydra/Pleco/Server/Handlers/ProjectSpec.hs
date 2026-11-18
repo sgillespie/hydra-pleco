@@ -1,9 +1,9 @@
-module Hydra.Pleco.Server.ProjectSpec (spec) where
+module Hydra.Pleco.Server.Handlers.ProjectSpec (spec) where
 
 import Hydra.Pleco.Api.Gen qualified as ApiGen
 import Hydra.Pleco.Server.DB.Hydra (Project (..))
 import Hydra.Pleco.Server.Gen qualified as Gen
-import Hydra.Pleco.Server.Projects.DB (fromProject, toProject)
+import Hydra.Pleco.Server.Handlers.Projects.DB (fromProject, toProject)
 
 import Hedgehog (forAll)
 import Hydra.Pleco.Api.Project qualified as Api

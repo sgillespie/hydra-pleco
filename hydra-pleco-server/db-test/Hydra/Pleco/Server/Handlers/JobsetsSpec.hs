@@ -1,4 +1,4 @@
-module Hydra.Pleco.Server.JobsetsSpec (spec) where
+module Hydra.Pleco.Server.Handlers.JobsetsSpec (spec) where
 
 import Hydra.Pleco.Api qualified as Api
 import Hydra.Pleco.Client qualified as Client
@@ -10,7 +10,7 @@ import Test.Hspec (SpecWith, describe, it, shouldBe, shouldMatchList, shouldThro
 import UnliftIO (try)
 
 spec :: SpecWith (Text, Pool)
-spec = describe "Hydra.Pleco.Server.Jobsets" $ do
+spec = describe "Hydra.Pleco.Server.Handlers.Jobsets" $ do
   describe "jobsets" $ do
     describe "listJobsets" $ do
       it "lists every jobset for a project" $

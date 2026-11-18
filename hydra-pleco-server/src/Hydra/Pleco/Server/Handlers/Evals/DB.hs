@@ -1,4 +1,4 @@
-module Hydra.Pleco.Server.Evals.DB
+module Hydra.Pleco.Server.Handlers.Evals.DB
   ( fromEval,
     toEval,
   ) where
