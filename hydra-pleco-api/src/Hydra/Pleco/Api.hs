@@ -27,10 +27,15 @@ module Hydra.Pleco.Api
     EvalsApi (..),
     Eval (..),
     EvalId (..),
+    BuildsApi (..),
+    Build (..),
+    BuildId (..),
+    BuildStatus (..),
     hydraApi,
     jobsetEventApi,
   ) where
 
+import Hydra.Pleco.Api.Build (Build (..), BuildId (..), BuildStatus (..))
 import Hydra.Pleco.Api.Eval (Eval (..), EvalId (..))
 import Hydra.Pleco.Api.Event
   ( EventType (..),
@@ -69,7 +74,8 @@ data HydraApi mode = HydraApi
     apiWebhooks :: mode :- "webhooks" :> NamedRoutes WebhooksApi,
     apiProjects :: mode :- "projects" :> NamedRoutes ProjectsApi,
     apiJobsets :: mode :- "jobsets" :> NamedRoutes JobsetsApi,
-    apiEvals :: mode :- "evals" :> NamedRoutes EvalsApi
+    apiEvals :: mode :- "evals" :> NamedRoutes EvalsApi,
+    apiBuilds :: mode :- "builds" :> NamedRoutes BuildsApi
   }
   deriving stock (Generic)
 
@@ -97,9 +103,14 @@ data JobsetsApi mode = JobsetsApi
   }
   deriving stock (Generic)
 
-newtype EvalsApi mode = EvalsApi
-  { evaGet :: mode :- Capture "id" EvalId :> Get '[JSON] Eval
+data EvalsApi mode = EvalsApi
+  { evaGet :: mode :- Capture "id" EvalId :> Get '[JSON] Eval,
+    evaBuilds :: mode :- Capture "id" EvalId :> "builds" :> Get '[JSON] [Build]
   }
+  deriving stock (Generic)
+
+newtype BuildsApi mode = BuildsApi
+  {bdaGet :: mode :- Capture "id" BuildId :> Get '[JSON] Build}
   deriving stock (Generic)
 
 -- | The full Rest API application: the documented routes plus the Swagger UI.

@@ -38,6 +38,55 @@
             }
         },
         "schemas": {
+            "Build": {
+                "properties": {
+                    "drv_path": {
+                        "type": "string"
+                    },
+                    "finish_time": {
+                        "maximum": 9223372036854775807,
+                        "minimum": -9223372036854775808,
+                        "type": "integer"
+                    },
+                    "id": {
+                        "maximum": 9223372036854775807,
+                        "minimum": -9223372036854775808,
+                        "type": "integer"
+                    },
+                    "job": {
+                        "type": "string"
+                    },
+                    "package_name": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/BuildStatus"
+                    },
+                    "system": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "job",
+                    "system",
+                    "drv_path",
+                    "status"
+                ],
+                "type": "object"
+            },
+            "BuildStatus": {
+                "enum": [
+                    "SUCCEEDED",
+                    "FAILED",
+                    "DEPENDENCY_FAILED",
+                    "ABORTED",
+                    "CANCELLED",
+                    "FAILED_WITH_OUTPUT",
+                    "TIMED_OUT"
+                ],
+                "type": "string"
+            },
             "Eval": {
                 "properties": {
                     "checkout_time": {
@@ -336,6 +385,37 @@
     },
     "openapi": "3.0.0",
     "paths": {
+        "/builds/{id}": {
+            "get": {
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "maximum": 9223372036854775807,
+                            "minimum": -9223372036854775808,
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json;charset=utf-8": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Build"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "`id` not found"
+                    }
+                }
+            }
+        },
         "/evals/{id}": {
             "get": {
                 "parameters": [
@@ -356,6 +436,47 @@
                             "application/json;charset=utf-8": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Eval"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Problem"
+                                }
+                            }
+                        },
+                        "description": "No such eval with `id`."
+                    }
+                }
+            }
+        },
+        "/evals/{id}/builds": {
+            "get": {
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "maximum": 9223372036854775807,
+                            "minimum": -9223372036854775808,
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json;charset=utf-8": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/Build"
+                                    },
+                                    "type": "array"
                                 }
                             }
                         },

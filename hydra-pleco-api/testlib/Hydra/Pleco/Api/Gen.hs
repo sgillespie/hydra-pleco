@@ -14,6 +14,9 @@ module Hydra.Pleco.Api.Gen
     jobsetType,
     eval,
     evalId,
+    build,
+    buildId,
+    buildStatus,
     title,
     url,
     uriReference,
@@ -21,7 +24,10 @@ module Hydra.Pleco.Api.Gen
   ) where
 
 import Hydra.Pleco.Api
-  ( Eval (..),
+  ( Build (..),
+    BuildId (..),
+    BuildStatus,
+    Eval (..),
     EvalId (..),
     EventType (..),
     Health (..),
@@ -201,6 +207,33 @@ eval = do
 
 evalId :: Gen EvalId
 evalId = EvalId <$> Gen.int (Range.linear 0 maxBound)
+
+build :: Gen Build
+build = do
+  id' <- buildId
+  job <- title
+  finishedAt <- Gen.maybe $ Gen.int (Range.linear 0 maxBound)
+  packageName <- Gen.maybe title
+  system <- title
+  drvPath <- title
+  status <- buildStatus
+
+  pure
+    Build
+      { bldId = id',
+        bldJob = job,
+        bldFinishTime = finishedAt,
+        bldPackageName = packageName,
+        bldSystem = system,
+        bldDrvPath = toString drvPath,
+        bldStatus = status
+      }
+
+buildId :: Gen BuildId
+buildId = BuildId <$> Gen.int (Range.linear 0 maxBound)
+
+buildStatus :: Gen BuildStatus
+buildStatus = Gen.enumBounded
 
 jobsetName :: Gen JobsetName
 jobsetName = JobsetName <$> title

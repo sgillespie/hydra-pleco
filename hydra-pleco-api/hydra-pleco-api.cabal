@@ -67,6 +67,7 @@ library
   hs-source-dirs: src
   exposed-modules:
     Hydra.Pleco.Api
+    Hydra.Pleco.Api.Build
     Hydra.Pleco.Api.Eval
     Hydra.Pleco.Api.Event
     Hydra.Pleco.Api.Jobset
@@ -95,6 +96,7 @@ test-suite tests
   main-is: Main.hs
   other-modules:
     Hydra.Pleco.Api.OpenApiSpec
+    Hydra.Pleco.Api.BuildSpec
     Hydra.Pleco.ApiSpec
 
   build-depends:

@@ -39,6 +39,8 @@ hydraOpenApi =
       ?~ OpenApi.Inline (mkProblemResponse "No such jobset with `id`.")
     & pathGetResponses "/evals/{id}" % at 404
       ?~ OpenApi.Inline (mkProblemResponse "No such eval with `id`.")
+    & pathGetResponses "/evals/{id}/builds" % at 404
+      ?~ OpenApi.Inline (mkProblemResponse "No such eval with `id`.")
   where
     pathCallbacks path = #paths % at path % _Just % #post % _Just % #callbacks
     pathGetResponses path = #paths % at path % _Just % #get % _Just % #responses
