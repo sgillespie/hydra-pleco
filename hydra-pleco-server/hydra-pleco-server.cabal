@@ -62,6 +62,7 @@ library
     Hydra.Pleco.Server.DB.Hydra
     Hydra.Pleco.Server.Error
     Hydra.Pleco.Server.Handlers
+    Hydra.Pleco.Server.Handlers.Builds
     Hydra.Pleco.Server.Handlers.Evals
     Hydra.Pleco.Server.Handlers.Evals.DB
     Hydra.Pleco.Server.Handlers.Jobsets

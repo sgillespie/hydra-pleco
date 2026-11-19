@@ -6,11 +6,11 @@ module Hydra.Pleco.Api.Build
 
 import Data.Aeson (FromJSON, ToJSON, (.:), (.=))
 import Data.Aeson qualified as Aeson
+import Data.HashMap.Strict.InsOrd.Compat qualified as InsOrd
 import Data.OpenApi (ToParamSchema, ToSchema (..))
 import Data.OpenApi qualified as OpenApi
 import Optics ((.~), (?~))
-import Servant.API (ToHttpApiData)
-import qualified Data.HashMap.Strict.InsOrd.Compat as InsOrd
+import Servant.API (ToHttpApiData, FromHttpApiData)
 
 data Build = Build
   { bldId :: BuildId,
@@ -25,7 +25,14 @@ data Build = Build
 
 newtype BuildId = BuildId {unBuildId :: Int}
   deriving stock (Eq, Generic, Ord, Show)
-  deriving newtype (ToJSON, FromJSON, ToHttpApiData, ToParamSchema, ToSchema)
+  deriving newtype
+    ( ToJSON,
+      FromJSON,
+      FromHttpApiData,
+      ToHttpApiData,
+      ToParamSchema,
+      ToSchema
+    )
 
 data BuildStatus
   = BuildSucceeded
@@ -93,7 +100,7 @@ instance ToSchema Build where
               ("drv_path", OpenApi.toSchemaRef @FilePath Proxy),
               ("status", statusSchema)
             ]
-        required = 
+        required =
           [ "id",
             "job",
             "system",

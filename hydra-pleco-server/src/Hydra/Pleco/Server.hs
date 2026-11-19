@@ -129,7 +129,8 @@ apiServer =
       apiWebhooks = Handlers.webhooksHandler,
       apiProjects = Handlers.projectsHandler,
       apiJobsets = Handlers.jobsetsHandler,
-      apiEvals = Handlers.evalsHandler
+      apiEvals = Handlers.evalsHandler,
+      apiBuilds = Handlers.buildsHandler
     }
 
 healthHandler :: PlecoServerT Handler Health

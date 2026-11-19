@@ -7,14 +7,16 @@ import Hydra.Pleco.Api (Eval (..), EvalId (..), EvalsApi (..), JobsetId (..))
 import Hydra.Pleco.Server.DB qualified as DB
 import Hydra.Pleco.Server.Handlers.Evals.DB (fromEval)
 import Hydra.Pleco.Server.Monad (PlecoServerEnv (..), PlecoServerT)
-
 import Hydra.Pleco.Server.Error (noSuchEvalError, noSuchJobsetError)
+import Hydra.Pleco.Server.Handlers.Builds (listBuildsHandler)
+
 import Servant (Handler, NamedRoutes, ServerT, throwError)
 
 evalsHandler :: ServerT (NamedRoutes EvalsApi) (PlecoServerT Handler)
 evalsHandler =
   EvalsApi
-    { evaGet = getEvalHandler
+    { evaGet = getEvalHandler,
+      evaBuilds = listBuildsHandler
     }
 
 listEvalsHandler :: JobsetId -> PlecoServerT Handler [Eval]

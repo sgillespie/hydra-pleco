@@ -1,15 +1,15 @@
 module Hydra.Pleco.Server.Handlers
-  ( evalsHandler,
-    listEvalsHandler,
+  ( projectsHandler,
     jobsetsHandler,
-    listJobsetsHandler,
-    projectsHandler,
+    evalsHandler,
+    buildsHandler,
     Webhook.webhooksHandler,
     Webhook.webhooksSubscribeHandler,
     Webhook.watchHydraEvents,
   ) where
 
-import Hydra.Pleco.Server.Handlers.Evals (evalsHandler, listEvalsHandler)
-import Hydra.Pleco.Server.Handlers.Jobsets (jobsetsHandler, listJobsetsHandler)
+import Hydra.Pleco.Server.Handlers.Builds (buildsHandler)
+import Hydra.Pleco.Server.Handlers.Evals (evalsHandler)
+import Hydra.Pleco.Server.Handlers.Jobsets (jobsetsHandler)
 import Hydra.Pleco.Server.Handlers.Projects (projectsHandler)
 import Hydra.Pleco.Server.Handlers.Webhook qualified as Webhook

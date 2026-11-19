@@ -13,10 +13,12 @@ module Hydra.Pleco.Client
     listProjects,
     listJobsets,
     getJobset,
-    findJobset,
     listEvals,
-    findEvals,
     getEval,
+    listBuilds,
+    getBuild,
+    findJobset,
+    findEvals,
 
     -- * Running the reference webhook server
     runEchoServer,
@@ -35,6 +37,9 @@ module Hydra.Pleco.Client
     Api.JobsetType (..),
     Api.Eval (..),
     Api.EvalId (..),
+    Api.Build (..),
+    Api.BuildId (..),
+    Api.BuildStatus (..),
 
     -- * Formatting results
     ToTable (..),
@@ -67,6 +72,8 @@ import Hydra.Pleco.Api
     JobsetName,
     Project,
     ProjectId,
+    Build,
+    BuildId,
   )
 import Hydra.Pleco.Api qualified as Api
 import Hydra.Pleco.Client.EchoServer (runEchoServer)
@@ -136,6 +143,7 @@ plecoClient = genericClientHoist hoistClientM
 hoistClientM :: ClientM a -> PlecoClient a
 hoistClientM = PlecoClient . lift
 
+-- TODO[sgillespie]: These probably belong in `hydra-pleco-api`
 getHealth :: PlecoClient Health
 getHealth = plecoClient // Api.apiHealth
 
@@ -151,12 +159,21 @@ listJobsets = plecoClient // Api.apiProjects // Api.prjaJobsets
 getJobset :: JobsetId -> PlecoClient Jobset
 getJobset = plecoClient // Api.apiJobsets // Api.jsaGet
 
+listEvals :: JobsetId -> PlecoClient [Eval]
+listEvals = plecoClient // Api.apiJobsets // Api.jsaEvals
+
+getEval :: EvalId -> PlecoClient Eval
+getEval = plecoClient // Api.apiEvals // Api.evaGet
+
+listBuilds :: EvalId -> PlecoClient [Build]
+listBuilds = plecoClient // Api.apiEvals // Api.evaBuilds
+
+getBuild :: BuildId -> PlecoClient Build
+getBuild = plecoClient // Api.apiBuilds // Api.bdaGet
+
 findJobset :: JobsetSpec -> PlecoClient (Maybe Jobset)
 findJobset (JobsetSpec projectId jobset) =
   listToMaybe <$> listJobsets projectId (Just jobset)
-
-listEvals :: JobsetId -> PlecoClient [Eval]
-listEvals = plecoClient // Api.apiJobsets // Api.jsaEvals
 
 findEvals :: JobsetSpec -> PlecoClient [Eval]
 findEvals jobset = do
@@ -164,5 +181,3 @@ findEvals jobset = do
   allEvals <- maybe (pure []) (listEvals . Api.jsId) jobset'
   pure (filter Api.evHasNewBuilds allEvals)
 
-getEval :: EvalId -> PlecoClient Eval
-getEval = plecoClient // Api.apiEvals // Api.evaGet
