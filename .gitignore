@@ -27,8 +27,8 @@ cabal.project.local
 # Stack
 .stack-work/
 stack.yaml.lock
-# hspec-golden writes `data/PATH/actual` on every run. To accept it, copy it to
-# `data/PATH/golden`
+# hspec-golden writes `data/PATH/actual` on every run. To accept a change, delete
+# `data/PATH/golden` and rerun the tests
 **/data/**/actual
 
 ### IDE/support
