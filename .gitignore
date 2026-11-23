@@ -56,6 +56,11 @@ tags
 .dir-locals.el
 TAGS
 
+### Agents
+.claude/
+CLAUDE.local.md
+specs/
+
 ### Nix
 result
 result-*
